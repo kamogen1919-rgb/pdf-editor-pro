@@ -57,20 +57,20 @@
             font-weight: 600;
         }
         
-        /* image2.pngのレイアウトに合わせた半透明ボックス＋キャラ配置 */
+        /* 枠の背景をグラデーションにし、黒い背景からふわっと浮かび上がるような立体感を持たせました */
         .hero-content-box {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 25px;
-            background: rgba(25, 23, 62, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(51, 65, 85, 0.55) 0%, rgba(30, 58, 138, 0.45) 100%);
+            border: 0px solid rgba(147, 197, 253, 0.25);
             padding: 25px 35px;
-            border-radius: 12px;
+            border-radius: 14px;
             max-width: 800px;
             margin: 0 auto 30px auto;
             text-align: left;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
         .hero-text-area {
             flex-grow: 1;
@@ -132,7 +132,7 @@
         }
         .step-badge {
             background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 0px solid rgba(255, 255, 255, 0.15);
             padding: 10px 18px;
             border-radius: 8px;
             font-size: 0.9rem;
