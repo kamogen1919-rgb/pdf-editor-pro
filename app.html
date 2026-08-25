@@ -50,16 +50,20 @@
             gap: 15px;
         }
 
-        .logo {
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--primary-color);
+                 .logo {
             display: flex;
             align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary-color);
         }
-
+        /* ヘッダー内キャラクターのサイズ調整 */
+        .logo img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+}
         .badge {
             background-color: #f1f5f9;
             padding: 1px 6px;
@@ -407,7 +411,11 @@
 
     <!-- ヘッダー -->
     <header>
-        <div class="logo">📄 PDF文字入れ君 Pro <span class="badge">v1.0</span></div>
+        <div class="logo">
+            <img src="character.png" alt="マスコットキャラクター">
+            PDF文字入れ君 Pro
+        </div>
+
         <div id="statusMessage" class="status-bubble">PDFファイルを選択してください。</div>
         <div id="undoHint" style="margin-left: 15px; font-size: 0.75rem; color: #64748b; font-weight: 600; opacity: 0; transition: opacity 0.3s;">
             ※Ctrl+Zで戻る  ※Ctrl+Cでコピー、Ctrl+Vで貼り付け
@@ -520,7 +528,8 @@
 
             <!-- ライセンスキー・購入エリア -->
             <div id="premiumUpgradeContainer" style="margin-top: 5px; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; background-color: #f8fafc;">
-                <a href="https://buy.stripe.com/aFafZi2Ab5QR791a8CgYU00" target="_blank" rel="noopener noreferrer" class="btn-ui btn-primary" style="margin-bottom: 6px; font-size: 0.75rem; padding: 5px; text-align: center;">
+                <a href="https://buy.stripe.com/test_aFa3cv87s2Fv0KCfih5ZC01
+" target="_blank" rel="noopener noreferrer" class="btn-ui btn-primary" style="margin-bottom: 6px; font-size: 0.75rem; padding: 5px; text-align: center;">
                     💳 ライセンスキーを購入する
                 </a>
 
