@@ -148,9 +148,31 @@
             font-weight: bold;
         }
 
+        /* 対応環境についてのご注意ボックスのスタイル */
+        .environment-notice {
+            max-width: 960px;
+            margin: 40px auto 0 auto;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--primary-color);
+            padding: 20px 25px;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            line-height: 1.6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .environment-notice strong {
+            color: var(--primary-color);
+            display: block;
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+
         .features {
             max-width: 1000px;
-            margin: 60px auto;
+            margin: 60px auto 0 auto;
             padding: 0 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -174,6 +196,7 @@
             font-size: 0.85rem;
             border-top: 1px solid #e2e8f0;
             background: #ffffff;
+            margin-top: 60px;
         }
     </style>
 </head>
@@ -216,6 +239,7 @@
         </div>
     </div>
 
+    <!-- 特徴紹介セクション -->
     <div class="features">
         <div class="feature-card">
             <h3>🔒 100%安全なローカル処理</h3>
@@ -228,6 +252,14 @@
         <div class="feature-card">
             <h3>✨ 簡単操作＆整列機能</h3>
             <p>ダブルクリックで即座に文字追加。拡大縮小やワンタッチのレ点挿入、複数テキストのきっちり整列もラクラクです。</p>
+        </div>
+    </div>
+
+    <!-- 特徴紹介のすぐ下に配置した対応環境の注意書き -->
+    <div style="padding: 0 20px;">
+        <div class="environment-notice">
+            <strong>対応環境についてのご注意</strong>
+            本ツールはPC環境（マウス操作）での利用をメインに想定して設計されています。スマホ、タブレット端末等では、ダブルクリック等の操作上の制約により文字入力や編集が難しいため、恐れ入りますがパソコンからのご利用をお願いいたします。
         </div>
     </div>
 
