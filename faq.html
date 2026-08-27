@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>よくあるご質問 (Q&A) - PDF文字入れ君 Pro</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f1f5f9;
+            --panel-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-color: #1e293b;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* ヘッダー */
+        header {
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .logo img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+        }
+
+        .back-link {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 6px 12px;
+            border: 1px solid #bfdbfe;
+            background-color: #eff6ff;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .back-link:hover {
+            background-color: #dbeafe;
+        }
+
+        /* メインコンテンツ */
+        .main-container {
+            max-width: 800px;
+            width: 100%;
+            margin: 40px auto;
+            padding: 0 20px;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            margin-bottom: 24px;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .faq-card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .faq-question {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .faq-answer-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .faq-character-img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .faq-answer-text {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #334155;
+            margin: 0;
+        }
+
+        /* フッター */
+        footer {
+            padding: 16px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #64748b;
+            background-color: var(--panel-bg);
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ヘッダー -->
+    <header>
+        <a href="index.html" class="logo">
+            <img src="character.png" alt="マスコットキャラクター">
+            PDF文字入れ君 Pro
+        </a>
+        
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main-container">
+        <h1>よくあるご質問 (Q&A)</h1>
+
+        <!-- 質疑 1 -->
+        <div class="faq-card">
+            <div class="faq-question">
+                <span>Q1.</span>
+                <span>このアプリはどういった人におすすめですか？</span>
+            </div>
+            <div class="faq-answer-wrapper">
+                <img src="character.png" alt="キャラクター" class="faq-character-img">
+                <p class="faq-answer-text">
+                    ちょっとした文字入れをしたい方におすすめです。<br>
+                    文字入れに必要な機能だけに絞っているため、迷わず直感的に操作できます。
+                </p>
+            </div>
+        </div>
+
+        <!-- 質疑 2 -->
+        <div class="faq-card">
+            <div class="faq-question">
+                <span>Q2.</span>
+                <span>インストールなしでちゃんと使用できますか？</span>
+            </div>
+            <div class="faq-answer-wrapper">
+                <img src="character.png" alt="キャラクター" class="faq-character-img">
+                <p class="faq-answer-text">
+                    ブラウザからアクセスしてすぐに文字入れを始められます。<br>
+                    ファイルはあなたのパソコン（ブラウザ内）だけで処理されるため、外部にデータが漏洩する心配がありません。
+                </p>
+            </div>
+        </div>
+
+        <!-- 質疑 3 -->
+        <div class="faq-card">
+            <div class="faq-question">
+                <span>Q3.</span>
+                <span>文字入力途中で保存できますか？</span>
+            </div>
+            <div class="faq-answer-wrapper">
+                <img src="character.png" alt="キャラクター" class="faq-character-img">
+                <p class="faq-answer-text">
+                    保存できます。作業途中でもあとから再開可能です。なお、文字情報はPDFデータとは別ファイル（.json）として保存されるため、次回はPDFと保存した文字情報の両方を読み込んで作業を再開します。
+                </p>
+            </div>
+        </div>
+
+        <!-- 質疑 4 -->
+        <div class="faq-card">
+            <div class="faq-question">
+                <span>Q4.</span>
+                <span>なにか注意点はありますか？</span>
+            </div>
+            <div class="faq-answer-wrapper">
+                <img src="character.png" alt="キャラクター" class="faq-character-img">
+                <p class="faq-answer-text">
+                    本ツールはPC環境（マウス操作）での利用をメインに想定して設計されています。スマホ、タブレット端末等では、操作上の制約により文字入力や編集が難しいため、恐れ入りますがパソコンからのご利用をお願いいたします。
+                </p>
+            </div>
+        </div>
+
+        <!-- 質疑 5 -->
+        <div class="faq-card">
+            <div class="faq-question">
+                <span>Q5.</span>
+                <span>PDFの文字が表示されなかったりすることがあります。</span>
+            </div>
+            <div class="faq-answer-wrapper">
+                <img src="character.png" alt="キャラクター" class="faq-character-img">
+                <p class="faq-answer-text">
+                    PDFの内部構造によっては、そのままでは正しく表示されないことがあります。読み込み前に、PDFデータをプリンターメニューから「PDFに保存」し直してからお試しください。
+                </p>
+            </div>
+        </div>
+
+        <!-- 質疑 6 -->
+        <div class="faq-card">
+            <div class="faq-question">
+                <span>Q6.</span>
+                <span>文字入力したPDFが保存できないときがあります。</span>
+            </div>
+            <div class="faq-answer-wrapper">
+                <img src="character.png" alt="キャラクター" class="faq-character-img">
+                <p class="faq-answer-text">
+                    PDFが保護されている場合、そのままでは保存ができません。読み込み前に、PDFデータをプリンターメニューから「PDFに保存」したものを使用するか、保護を解除してからお試しください。
+                </p>
+            </div>
+        </div>
+
+        <!-- 質疑 7 -->
+        <div class="faq-card">
+            <div class="faq-question">
+                <span>Q7.</span>
+                <span>このアプリの書き出し制限解除の料金はサブスクリプションですか？</span>
+            </div>
+            <div class="faq-answer-wrapper">
+                <img src="character.png" alt="キャラクター" class="faq-character-img">
+                <p class="faq-answer-text">
+                    サブスクリプション契約なしの1回買い切りで、手軽にご利用いただけます。<br>
+                    簡易機能に限定しているため、お求めやすい買い切り価格にしています。
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- フッター -->
+    <footer>
+        &copy; 2026 PDF文字入れ君 Pro
+    </footer>
+
+</body>
+</html>
