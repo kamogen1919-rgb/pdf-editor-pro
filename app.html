@@ -215,7 +215,7 @@
             background-color: var(--bg-color);
             box-sizing: border-box;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 45px; /* フッターとPDFが重ならないように下の余白を確保 */
+            padding-bottom: 60px; /* フッターとPDFが重ならないように下の余白を増やす */
         }
 
         .footer-area {
@@ -428,11 +428,12 @@
                 flex-shrink: 0;
             }
             .workspace-wrapper {
-                flex: 1 !important;
-                height: auto !important;
-                min-height: 0 !important;
-                position: relative !important;
-                overflow: hidden !important;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative; /* 内部のフッターを絶対配置するための基準 */
+            overflow: hidden;   /* 右側エリア内での収まりを制御 */
+            height: 100%;       /* 高さを親要素（main-container）の基準に合わせる */
             }
             header {
                 padding: 4px 10px;
