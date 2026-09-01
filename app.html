@@ -174,10 +174,10 @@
             flex-direction: column;
             gap: 12px;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch; /* iPad等の滑らかなスクロール用 */
+            -webkit-overflow-scrolling: touch;
             box-sizing: border-box;
             flex-shrink: 0;
-            height: 100%; /* 親要素の高さいっぱいに広げて内部スクロールさせる */
+            max-height: 100%; 
         }
 
         .sidebar > div {
@@ -401,7 +401,11 @@
         .custom-modal-btn-ok { background-color: #10b981; color: white; }
 
         @media screen and (max-width: 1024px) {
-            body { height: 100vh; overflow: auto; }
+            body { 
+                height: auto; 
+                min-height: 100vh;
+                overflow: auto; /* 画面全体でスクロールできるようにする */
+            }
             .main-container {
                 flex-direction: column;
                 height: auto;
@@ -409,15 +413,14 @@
             }
             .sidebar {
                 width: 100%;
-                max-height: 50vh; /* サイドバーが高くなりすぎないようにしつつ、中でスクロールできるようにする */
+                max-height: none; /* 高制限を解除し、中身の高さに合わせて展開させる */
                 border-right: none;
                 border-bottom: 1px solid var(--border-color);
                 padding: 10px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
+                overflow-y: visible; /* タブレット幅ではサイドバー単体を閉じ込めず、ページ全体でスクロールさせる方が確実です */
             }
             .workspace-wrapper {
-                height: 60vh;
+                height: 70vh; /* ワークスペースの高さ確保 */
             }
             header {
                 padding: 4px 10px;
