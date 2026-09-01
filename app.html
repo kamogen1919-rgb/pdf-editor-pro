@@ -227,6 +227,8 @@
             box-sizing: border-box;
             -webkit-overflow-scrolling: touch;
             padding-bottom: 20px;
+            /* 追加: タッチ操作での縦横スクロールをブラウザに許可する */
+            touch-action: pan-x pan-y;
         }
 
         .footer-area {
@@ -646,7 +648,6 @@
         let startX, startY;
 
         fCanvas.on('mouse:down', function(opt) {
-            // スタンプモードではなく、かつオブジェクトが選択・クリックされていない場合
             if (!isStampMode && !opt.target) {
                 isDraggingCanvas = true;
                 const e = opt.e;
