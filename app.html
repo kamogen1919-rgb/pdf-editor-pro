@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF文字入れ君 Pro (Mobile Ready)</title>
     <!-- 外部ライブラリ -->
     <script src="js/pdf.min.js"></script>
@@ -268,7 +268,7 @@
             background: #fff;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             border-radius: 4px;
-            touch-action: pan-x pan-y; /* タッチでのスクロールやパンを許可 */
+            touch-action: auto; /* タッチでのスクロールやパンを許可 */
         }
 
         #bgCanvas { position: absolute; top: 0; left: 0; z-index: 1; }
