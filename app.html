@@ -31,8 +31,8 @@
             color: var(--text-color);
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
         /* ヘッダーエリア */
@@ -160,8 +160,7 @@
         .main-container {
             display: flex;
             flex: 1;
-            height: calc(100vh - 52px);
-            overflow: hidden;
+            min-height: calc(100vh - 52px);
             position: relative;
         }
 
@@ -400,27 +399,29 @@
         .custom-modal-btn-cancel { background-color: #f1f5f9; color: var(--text-color); }
         .custom-modal-btn-ok { background-color: #10b981; color: white; }
 
-        @media screen and (max-width: 1024px) {
+        @media screen and (max-width: 1180px) {
             body { 
-                height: auto; 
+                height: auto !important; 
                 min-height: 100vh;
-                overflow: auto; /* 画面全体でスクロールできるようにする */
+                overflow-y: auto !important; /* 画面全体でのスクロールを強制有効化 */
+                overflow-x: hidden;
             }
             .main-container {
-                flex-direction: column;
-                height: auto;
-                overflow: visible;
+                flex-direction: column !important;
+                height: auto !important;
+                overflow: visible !important;
             }
             .sidebar {
-                width: 100%;
-                max-height: none; /* 高制限を解除し、中身の高さに合わせて展開させる */
-                border-right: none;
+                width: 100% !important;
+                max-height: none !important;
+                border-right: none !important;
                 border-bottom: 1px solid var(--border-color);
-                padding: 10px;
-                overflow-y: visible; /* タブレット幅ではサイドバー単体を閉じ込めず、ページ全体でスクロールさせる方が確実です */
+                padding: 12px;
+                overflow-y: visible !important;
             }
             .workspace-wrapper {
-                height: 70vh; /* ワークスペースの高さ確保 */
+                height: 75vh !important;
+                min-height: 500px;
             }
             header {
                 padding: 4px 10px;
