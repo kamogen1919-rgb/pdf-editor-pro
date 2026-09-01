@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PDF文字入れ君 Pro (Mobile Ready)</title>
     <!-- 外部ライブラリ -->
     <script src="js/pdf.min.js"></script>
@@ -299,8 +299,8 @@
         .file-upload-box.guide-active {
             background-color: var(--success-color) !important;
             color: #ffffff !important;
-            border: 2px solid var(--success-hover) !important;
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+            border: none !important; /* または書き出しボタンの枠線スタイルに合わせて調整 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* btn-successに近いシャドウや挙動に合わせる */
         }
 
         .font-download-link {
@@ -420,37 +420,32 @@
 
         @media screen and (max-width: 1180px) {
             body { 
-                height: 100vh !important; 
-                overflow: hidden !important; /* 画面全体の不要なスクロールを防ぎ、内部で制御 */
+                height: auto !important; 
+                min-height: 100vh;
+                overflow-y: auto !important; /* 画面全体でのスクロールを強制有効化 */
+                overflow-x: hidden;
             }
             .main-container {
                 flex-direction: column !important;
-                height: calc(100vh - 52px) !important;
-                overflow: hidden !important;
-                display: flex !important;
+                height: auto !important;
+                overflow: visible !important;
             }
             .sidebar {
                 width: 100% !important;
-                max-height: 40vh !important; /* サイドバーが高くなりすぎないよう制限し、スクロール可能に */
+                max-height: none !important;
                 border-right: none !important;
                 border-bottom: 1px solid var(--border-color);
                 padding: 12px;
-                overflow-y: auto !important;
-                flex-shrink: 0;
+                overflow-y: visible !important;
             }
             .workspace-wrapper {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                position: relative;
-                overflow: hidden;
-                height: 100%;
+                height: 75vh !important;
+                min-height: 500px;
             }
             header {
                 padding: 4px 10px;
-                height: 52px;
+                height: auto;
                 flex-wrap: wrap;
-                flex-shrink: 0;
             }
             .logo { font-size: 0.9rem; }
             .status-bubble { font-size: 0.65rem; max-width: 60vw; }
@@ -525,13 +520,14 @@
                     </div>
                 </div>
                 
-                <div class="section-title" style="margin-top: 4px;">📐 整列</div>
+                <div class="section-title" style="margin-top: 4px;">📐 整列・編集</div>
                 <div class="align-container">
                     <button id="alignLeftBtn" class="btn-ui btn-secondary btn-align">左揃え</button>
                     <button id="alignCenterBtn" class="btn-ui btn-secondary btn-align">中央</button>
                     <button id="alignRightBtn" class="btn-ui btn-secondary btn-align">右揃え</button>
                     <button id="alignTopBtn" class="btn-ui btn-secondary btn-align">上揃え</button>
                 </div>
+                <button id="deleteSelectedBtn" class="btn-ui btn-secondary" style="margin-top: 6px; background-color: #fee2e2; color: #dc2626; border-color: #fecaca;">選択中の文字・スタンプを削除</button>
             </div>
 
             <hr class="divider">
@@ -546,7 +542,7 @@
             </div>
 
             <div id="premiumUpgradeContainer" style="padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; background-color: #f8fafc;">
-                <a href="https://buy.stripe.com/aFafZi2Ab5QR791a8CgYU00" target="_blank" rel="noopener noreferrer" class="btn-ui btn-primary" style="margin-bottom: 4px; font-size: 0.7rem; padding: 4px;">
+                <a href="https://buy.stripe.com/test_aFafZi2Ab5QR791a8CgYU00" target="_blank" rel="noopener noreferrer" class="btn-ui btn-primary" style="margin-bottom: 4px; font-size: 0.7rem; padding: 4px;">
                     💳 ライセンスキー購入
                 </a>
                 <input type="text" id="licenseKeyInput" placeholder="キーを入力" style="width: 100%; box-sizing: border-box; margin-bottom: 4px; padding: 4px; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px;">
@@ -620,6 +616,7 @@
         const pageInfo = document.getElementById('pageInfo');
         const insertCheckBtn = document.getElementById('insertCheckBtn');
         const insertCircleBtn = document.getElementById('insertCircleBtn');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
 
         let pdfDocBytes = null; 
         let historyStack = []; 
@@ -638,47 +635,9 @@
 
         const fCanvas = new fabric.Canvas('fabricCanvas', { 
             freeDrawingBrush: null,
-            allowTouchScrolling: true,
-            selection: true
-        });
-        
-        // --- PDF画面（キャンバス上）をドラッグしてスクロールできるようにする機能 ---
-        const workspaceEl = document.querySelector('.workspace');
-        let isDraggingCanvas = false;
-        let startX, startY;
-
-        fCanvas.on('mouse:down', function(opt) {
-            // スタンプモードではなく、かつオブジェクトが選択・クリックされていない場合
-            if (!isStampMode && !opt.target) {
-                isDraggingCanvas = true;
-                const e = opt.e;
-                startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-                startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-            }
+            allowTouchScrolling: true 
         });
 
-        fCanvas.on('mouse:move', function(opt) {
-            if (isDraggingCanvas) {
-                const e = opt.e;
-                const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : startX);
-                const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : startY);
-                
-                const dx = clientX - startX;
-                const dy = clientY - startY;
-
-                workspaceEl.scrollLeft -= dx;
-                workspaceEl.scrollTop -= dy;
-
-                startX = clientX;
-                startY = clientY;
-            }
-        });
-
-        fCanvas.on('mouse:up', function() {
-            isDraggingCanvas = false;
-        });
-        // -------------------------------------------------------------------
-        
         downloadBtn.addEventListener('click', async () => {
             if (!pdfDocBytes || !fontFileBytes) return;
 
@@ -878,13 +837,10 @@
             }
         });
 
-        // ダブルタップを判定するための変数
         let lastTapTime = 0;
+        let lastTapPointer = null;
 
         fCanvas.on('mouse:down', (options) => {
-            // ドラッグスクロール処理を行うため、ここではisDraggingCanvasがtrueのときは何もしない
-            if (isDraggingCanvas) return;
-
             if (isStampMode) {
                 const pointer = fCanvas.getPointer(options.e);
                 const confirmedText = new fabric.IText(activeStampSymbol, {
@@ -974,6 +930,33 @@
         document.getElementById('alignCenterBtn').addEventListener('click', () => alignObjects('center'));
         document.getElementById('alignRightBtn').addEventListener('click', () => alignObjects('right'));
         document.getElementById('alignTopBtn').addEventListener('click', () => alignObjects('top'));
+  
+// --- 選択オブジェクト削除処理の追加 ---
+        function deleteActiveObject() {
+            const activeObjects = fCanvas.getActiveObjects();
+            if (activeObjects.length > 0) {
+                activeObjects.forEach(obj => {
+                    fCanvas.remove(obj);
+                });
+                fCanvas.discardActiveObject();
+                fCanvas.renderAll();
+                saveHistory();
+                statusMessage.textContent = READY_STATUS_TEXT;
+            }
+        }
+
+        deleteSelectedBtn.addEventListener('click', deleteActiveObject);
+
+        // PCキーボードの Delete / Backspace キーでも削除できるようにする
+        window.addEventListener('keydown', (e) => {
+            // テキストの編集中（文字入力中）は誤爆を防ぐため除外
+            const activeObj = fCanvas.getActiveObject();
+            if (activeObj && activeObj.isEditing) return;
+
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                deleteActiveObject();
+            }
+        });
 
         function alignObjects(type) {
             const activeSelection = fCanvas.getActiveObject();
@@ -1133,76 +1116,247 @@
             const count = parseInt(localStorage.getItem('downloadCount') || '0');
             document.getElementById('remainingCount').textContent = Math.max(0, 3 - count);
         }
-    }
-
-    function verifyLicenseKey(inputKey) {
+    }function verifyLicenseKey(inputKey) {
         const validKeys = [
-        "PRO-A1B2-C3D4", "PRO-E5F6-G7H8", "PRO-J9K0-L1M2", "PRO-N3P4-Q5R6",
-        "PRO-S7T8-U9V0", "PRO-W1X2-Y3Z4", "PRO-B5C6-D7E8", "PRO-F9G0-H1J2",
-        "PRO-K3L4-M5N6", "PRO-P7Q8-R9S0", "PRO-T1U2-V3W4", "PRO-X5Y6-Z7A8",
-        "PRO-C9D0-E1F2", "PRO-G3H4-J5K6", "PRO-L7M8-N9P0", "PRO-Q1R2-S3T4",
-        "PRO-U5V6-W7X8", "PRO-Y9Z0-B1C2", "PRO-D3E4-F5G6", "PRO-H7J8-K9L0",
-        "PRO-M1N2-P3Q4", "PRO-R5S6-T7U8", "PRO-V9W0-X1Y2", "PRO-Z3A4-C5D6",
-        "PRO-E7F8-G9H0", "PRO-J1K2-L3M4", "PRO-N5P6-Q7R8", "PRO-S9T0-U1V2",
-        "PRO-W3X4-Y5Z6", "PRO-B7C8-D9E0", "PRO-F1G2-H3J4", "PRO-K5L6-M7N8",
-        "PRO-P9Q0-R1S2", "PRO-T3U4-V5W6", "PRO-X7Y8-Z9A0", "PRO-C1D2-E3F4",
-        "PRO-G5H6-J7K8", "PRO-L9M0-N1P2", "PRO-Q3R4-S5T6", "PRO-U7V8-W9X0",
-        "PRO-Y1Z2-B3C4", "PRO-D5E6-F7G8", "PRO-H9J0-K1L2", "PRO-M3N4-P5Q6",
-        "PRO-R7S8-T9U0", "PRO-V1W2-X3Y4", "PRO-Z5A6-C7D8", "PRO-E9F0-G1H2",
-        "PRO-J3K4-L5M6", "PRO-N7P8-Q9R0", "PRO-S1T2-U3V4", "PRO-W5X6-Y7Z8",
-        "PRO-B9C0-D1E2", "PRO-F3G4-H5J6", "PRO-K7L8-M9N0", "PRO-P1Q2-R3S4",
-        "PRO-T5U6-V7W8", "PRO-X9Y0-Z1A2", "PRO-C3D4-E5F6", "PRO-G7H8-J9K0",
-        "PRO-L1M2-N3P4", "PRO-Q5R6-S7T8", "PRO-U9V0-W1X2", "PRO-Y3Z4-B5C6",
-        "PRO-D7E8-F9G0", "PRO-H1J2-K3L4", "PRO-M5N6-P7Q8", "PRO-R9S0-T1U2",
-        "PRO-V3W4-X5Y6", "PRO-Z7A8-C9D0", "PRO-E1F2-G3H4", "PRO-J5K6-L7M8",
-        "PRO-N9P0-Q1R2", "PRO-S3T4-U5V6", "PRO-W7X8-Y9Z0", "PRO-B1C2-D3E4",
-        "PRO-F5G6-H7J8", "PRO-K9L0-M1N2", "PRO-P3Q4-R5S6", "PRO-T7U8-V9W0",
-        "PRO-X1Y2-Z3A4", "PRO-C5D6-E7F8", "PRO-G9H0-J1K2", "PRO-L3M4-N5P6",
-        "PRO-Q7R8-S9T0", "PRO-U1V2-W3X4", "PRO-Y5Z6-B7C8", "PRO-D9E0-F1G2",
-        "PRO-H3J4-K5L6", "PRO-M7N8-P9Q0", "PRO-R1S2-T3U4", "PRO-V5W6-X7Y8",
-        "PRO-Z9A0-C1D2", "PRO-E3F4-G5H6", "PRO-J7K8-L9M0", "PRO-N1P2-Q3R4",
-        "PRO-S5T6-U7V8", "PRO-W9X0-Y1Z2", "PRO-B3C4-D5E6", "PRO-F7G8-H9J0",
-        "PRO-K1L2-M3N4", "PRO-P5Q6-R7S8", "PRO-T9U0-V1W2", "PRO-X3Y4-Z5A6",
-        "PRO-C7D8-E9F0", "PRO-G1H2-J3K4", "PRO-L5M6-N7P8", "PRO-Q9R0-S1T2",
-        "PRO-U3V4-W5X6", "PRO-Y7Z8-B9C0", "PRO-D1E2-F3G4", "PRO-H5J6-K7L8",
-        "PRO-M9N0-P1Q2", "PRO-R3S4-T5U6", "PRO-V7W8-X9Y0", "PRO-Z1A2-C3D4",
-        "PRO-E5F6-G7H8", "PRO-J9K0-L1M2", "PRO-N3P4-Q5R6", "PRO-S7T8-U9V0",
-        "PRO-W1X2-Y3Z4", "PRO-B5C6-D7E8", "PRO-F9G0-H1J2", "PRO-K3L4-M5N6",
-        "PRO-P7Q8-R9S0", "PRO-T1U2-V3W4", "PRO-X5Y6-Z7A8", "PRO-C9D0-E1F2",
-        "PRO-G3H4-J5K6", "PRO-L7M8-N9P0", "PRO-Q1R2-S3T4", "PRO-U5V6-W7X8",
-        "PRO-Y9Z0-B1C2", "PRO-D3E4-F5G6", "PRO-H7J8-K9L0", "PRO-M1N2-P3Q4",
-        "PRO-R5S6-T7U8", "PRO-V9W0-X1Y2", "PRO-Z3A4-C5D6", "PRO-E7F8-G9H0",
-        "PRO-J1K2-L3M4", "PRO-N5P6-Q7R8", "PRO-S9T0-U1V2", "PRO-W3X4-Y5Z6",
-        "PRO-B7C8-D9E0", "PRO-F1G2-H3J4", "PRO-K5L6-M7N8", "PRO-P9Q0-R1S2",
-        "PRO-T3U4-V5W6", "PRO-X7Y8-Z9A0", "PRO-C1D2-E3F4", "PRO-G5H6-J7K8",
-        "PRO-L9M0-N1P2", "PRO-Q3R4-S5T6", "PRO-U7V8-W9X0", "PRO-Y1Z2-B3C4",
-        "PRO-D5E6-F7G8", "PRO-H9J0-K1L2", "PRO-M3N4-P5Q6", "PRO-R7S8-T9U0",
-        "PRO-V1W2-X3Y4", "PRO-Z5A6-C7D8", "PRO-E9F0-G1H2", "PRO-J3K4-L5M6",
-        "PRO-N7P8-Q9R0", "PRO-S1T2-U3V4", "PRO-W5X6-Y7Z8", "PRO-B9C0-D1E2",
-        "PRO-F3G4-H5J6", "PRO-K7L8-M9N0", "PRO-P1Q2-R3S4", "PRO-T5U6-V7W8",
-        "PRO-X9Y0-Z1A2", "PRO-C3D4-E5F6", "PRO-G7H8-J9K0", "PRO-L1M2-N3P4",
-        "PRO-Q5R6-S7T8", "PRO-U9V0-W1X2", "PRO-Y3Z4-B5C6", "PRO-D7E8-F9G0",
-        "PRO-H1J2-K3L4", "PRO-M5N6-P7Q8", "PRO-R9S0-T1U2", "PRO-V3W4-X5Y6",
-        "PRO-Z7A8-C9D0", "PRO-E1F2-G3H4", "PRO-J5K6-L7M8", "PRO-N9P0-Q1R2",
-        "PRO-S3T4-U5V6", "PRO-W7X8-Y9Z0", "PRO-B1C2-D3E4", "PRO-F5G6-H7J8",
-        "PRO-K9L0-M1N2", "PRO-P3Q4-R5S6", "PRO-T7U8-V9W0", "PRO-X1Y2-Z3A4",
-        "PRO-C5D6-E7F8", "PRO-G9H0-J1K2", "PRO-L3M4-N5P6",
-        "PRO-Q7R8-S9T0", "PRO-U1V2-W3X4", "PRO-Y5Z6-B7C8", "PRO-D9E0-F1G2",
-        "PRO-H3J4-K5L6", "PRO-M7N8-P9Q0", "PRO-R1S2-T3U4", "PRO-V5W6-X7Y8",
-        "PRO-Z9A0-C1D2", "PRO-E3F4-G5H6", "PRO-J7K8-L9M0", "PRO-N1P2-Q3R4",
-        "PRO-S5T6-U7V8", "PRO-W9X0-Y1Z2", "PRO-B3C4-D5E6", "PRO-F7G8-H9J0",
-        "PRO-K1L2-M3N4", "PRO-P5Q6-R7S8", "PRO-T9U0-V1W2", "PRO-X3Y4-Z5A6",
-        "PRO-C7D8-E9F0", "PRO-G1H2-J3K4", "PRO-L5M6-N7P8", "PRO-Q9R0-S1T2",
-        "PRO-U3V4-W5X6", "PRO-Y7Z8-B9C0", "PRO-D1E2-F3G4", "PRO-H5J6-K7L8",
-        "PRO-M9N0-P1Q2", "PRO-R3S4-T5U6", "PRO-V7W8-X9Y0"
-        ]; 
+        "PRO-A1B2-C3D4",
+        "PRO-E5F6-G7H8",
+        "PRO-J9K0-L1M2",
+        "PRO-N3P4-Q5R6",
+        "PRO-S7T8-U9V0",
+        "PRO-W1X2-Y3Z4",
+        "PRO-B5C6-D7E8",
+        "PRO-F9G0-H1J2",
+        "PRO-K3L4-M5N6",
+        "PRO-P7Q8-R9S0",
+        "PRO-T1U2-V3W4",
+        "PRO-X5Y6-Z7A8",
+        "PRO-C9D0-E1F2",
+        "PRO-G3H4-J5K6",
+        "PRO-L7M8-N9P0",
+        "PRO-Q1R2-S3T4",
+        "PRO-U5V6-W7X8",
+        "PRO-Y9Z0-B1C2",
+        "PRO-D3E4-F5G6",
+        "PRO-H7J8-K9L0",
+        "PRO-M1N2-P3Q4",
+        "PRO-R5S6-T7U8",
+        "PRO-V9W0-X1Y2",
+        "PRO-Z3A4-C5D6",
+        "PRO-E7F8-G9H0",
+        "PRO-J1K2-L3M4",
+        "PRO-N5P6-Q7R8",
+        "PRO-S9T0-U1V2",
+        "PRO-W3X4-Y5Z6",
+        "PRO-B7C8-D9E0",
+        "PRO-F1G2-H3J4",
+        "PRO-K5L6-M7N8",
+        "PRO-P9Q0-R1S2",
+        "PRO-T3U4-V5W6",
+        "PRO-X7Y8-Z9A0",
+        "PRO-C1D2-E3F4",
+        "PRO-G5H6-J7K8",
+        "PRO-L9M0-N1P2",
+        "PRO-Q3R4-S5T6",
+        "PRO-U7V8-W9X0",
+        "PRO-Y1Z2-B3C4",
+        "PRO-D5E6-F7G8",
+        "PRO-H9J0-K1L2",
+        "PRO-M3N4-P5Q6",
+        "PRO-R7S8-T9U0",
+        "PRO-V1W2-X3Y4",
+        "PRO-Z5A6-C7D8",
+        "PRO-E9F0-G1H2",
+        "PRO-J3K4-L5M6",
+        "PRO-N7P8-Q9R0",
+        "PRO-S1T2-U3V4",
+        "PRO-W5X6-Y7Z8",
+        "PRO-B9C0-D1E2",
+        "PRO-F3G4-H5J6",
+        "PRO-K7L8-M9N0",
+        "PRO-P1Q2-R3S4",
+        "PRO-T5U6-V7W8",
+        "PRO-X9Y0-Z1A2",
+        "PRO-C3D4-E5F6",
+        "PRO-G7H8-J9K0",
+        "PRO-L1M2-N3P4",
+        "PRO-Q5R6-S7T8",
+        "PRO-U9V0-W1X2",
+        "PRO-Y3Z4-B5C6",
+        "PRO-D7E8-F9G0",
+        "PRO-H1J2-K3L4",
+        "PRO-M5N6-P7Q8",
+        "PRO-R9S0-T1U2",
+        "PRO-V3W4-X5Y6",
+        "PRO-Z7A8-C9D0",
+        "PRO-E1F2-G3H4",
+        "PRO-J5K6-L7M8",
+        "PRO-N9P0-Q1R2",
+        "PRO-S3T4-U5V6",
+        "PRO-W7X8-Y9Z0",
+        "PRO-B1C2-D3E4",
+        "PRO-F5G6-H7J8",
+        "PRO-K9L0-M1N2",
+        "PRO-P3Q4-R5S6",
+        "PRO-T7U8-V9W0",
+        "PRO-X1Y2-Z3A4",
+        "PRO-C5D6-E7F8",
+        "PRO-G9H0-J1K2",
+        "PRO-L3M4-N5P6",
+        "PRO-Q7R8-S9T0",
+        "PRO-U1V2-W3X4",
+        "PRO-Y5Z6-B7C8",
+        "PRO-D9E0-F1G2",
+        "PRO-H3J4-K5L6",
+        "PRO-M7N8-P9Q0",
+        "PRO-R1S2-T3U4",
+        "PRO-V5W6-X7Y8",
+        "PRO-Z9A0-C1D2",
+        "PRO-E3F4-G5H6",
+        "PRO-J7K8-L9M0",
+        "PRO-N1P2-Q3R4",
+        "PRO-S5T6-U7V8",
+        "PRO-W9X0-Y1Z2",
+        "PRO-B3C4-D5E6",
+        "PRO-F7G8-H9J0",
+        "PRO-K1L2-M3N4",
+        "PRO-P5Q6-R7S8",
+        "PRO-T9U0-V1W2",
+        "PRO-X3Y4-Z5A6",
+        "PRO-C7D8-E9F0",
+        "PRO-G1H2-J3K4",
+        "PRO-L5M6-N7P8",
+        "PRO-Q9R0-S1T2",
+        "PRO-U3V4-W5X6",
+        "PRO-Y7Z8-B9C0",
+        "PRO-D1E2-F3G4",
+        "PRO-H5J6-K7L8",
+        "PRO-M9N0-P1Q2",
+        "PRO-R3S4-T5U6",
+        "PRO-V7W8-X9Y0",
+        "PRO-Z1A2-C3D4",
+        "PRO-E5F6-G7H8",
+        "PRO-J9K0-L1M2",
+        "PRO-N3P4-Q5R6",
+        "PRO-S7T8-U9V0",
+        "PRO-W1X2-Y3Z4",
+        "PRO-B5C6-D7E8",
+        "PRO-F9G0-H1J2",
+        "PRO-K3L4-M5N6",
+        "PRO-P7Q8-R9S0",
+        "PRO-T1U2-V3W4",
+        "PRO-X5Y6-Z7A8",
+        "PRO-C9D0-E1F2",
+        "PRO-G3H4-J5K6",
+        "PRO-L7M8-N9P0",
+        "PRO-Q1R2-S3T4",
+        "PRO-U5V6-W7X8",
+        "PRO-Y9Z0-B1C2",
+        "PRO-D3E4-F5G6",
+        "PRO-H7J8-K9L0",
+        "PRO-M1N2-P3Q4",
+        "PRO-R5S6-T7U8",
+        "PRO-V9W0-X1Y2",
+        "PRO-Z3A4-C5D6",
+        "PRO-E7F8-G9H0",
+        "PRO-J1K2-L3M4",
+        "PRO-N5P6-Q7R8",
+        "PRO-S9T0-U1V2",
+        "PRO-W3X4-Y5Z6",
+        "PRO-B7C8-D9E0",
+        "PRO-F1G2-H3J4",
+        "PRO-K5L6-M7N8",
+        "PRO-P9Q0-R1S2",
+        "PRO-T3U4-V5W6",
+        "PRO-X7Y8-Z9A0",
+        "PRO-C1D2-E3F4",
+        "PRO-G5H6-J7K8",
+        "PRO-L9M0-N1P2",
+        "PRO-Q3R4-S5T6",
+        "PRO-U7V8-W9X0",
+        "PRO-Y1Z2-B3C4",
+        "PRO-D5E6-F7G8",
+        "PRO-H9J0-K1L2",
+        "PRO-M3N4-P5Q6",
+        "PRO-R7S8-T9U0",
+        "PRO-V1W2-X3Y4",
+        "PRO-Z5A6-C7D8",
+        "PRO-E9F0-G1H2",
+        "PRO-J3K4-L5M6",
+        "PRO-N7P8-Q9R0",
+        "PRO-S1T2-U3V4",
+        "PRO-W5X6-Y7Z8",
+        "PRO-B9C0-D1E2",
+        "PRO-F3G4-H5J6",
+        "PRO-K7L8-M9N0",
+        "PRO-P1Q2-R3S4",
+        "PRO-T5U6-V7W8",
+        "PRO-X9Y0-Z1A2",
+        "PRO-C3D4-E5F6",
+        "PRO-G7H8-J9K0",
+        "PRO-L1M2-N3P4",
+        "PRO-Q5R6-S7T8",
+        "PRO-U9V0-W1X2",
+        "PRO-Y3Z4-B5C6",
+        "PRO-D7E8-F9G0",
+        "PRO-H1J2-K3L4",
+        "PRO-M5N6-P7Q8",
+        "PRO-R9S0-T1U2",
+        "PRO-V3W4-X5Y6",
+        "PRO-Z7A8-C9D0",
+        "PRO-E1F2-G3H4",
+        "PRO-J5K6-L7M8",
+        "PRO-N9P0-Q1R2",
+        "PRO-S3T4-U5V6",
+        "PRO-W7X8-Y9Z0",
+        "PRO-B1C2-D3E4",
+        "PRO-F5G6-H7J8",
+        "PRO-K9L0-M1N2",
+        "PRO-P3Q4-R5S6",
+        "PRO-T7U8-V9W0",
+        "PRO-X1Y2-Z3A4",
+        "PRO-C5D6-E7F8",
+        "PRO-G9H0-J1K2",
+        "PRO-L3M4-N5P6",
+        "PRO-Q7R8-S9T0",
+        "PRO-U1V2-W3X4",
+        "PRO-Y5Z6-B7C8",
+        "PRO-D9E0-F1G2",
+        "PRO-H3J4-K5L6",
+        "PRO-M7N8-P9Q0",
+        "PRO-R1S2-T3U4",
+        "PRO-V5W6-X7Y8",
+        "PRO-Z9A0-C1D2",
+        "PRO-E3F4-G5H6",
+        "PRO-J7K8-L9M0",
+        "PRO-N1P2-Q3R4",
+        "PRO-S5T6-U7V8",
+        "PRO-W9X0-Y1Z2",
+        "PRO-B3C4-D5E6",
+        "PRO-F7G8-H9J0",
+        "PRO-K1L2-M3N4",
+        "PRO-P5Q6-R7S8",
+        "PRO-T9U0-V1W2",
+        "PRO-X3Y4-Z5A6",
+        "PRO-C7D8-E9F0",
+        "PRO-G1H2-J3K4",
+        "PRO-L5M6-N7P8",
+        "PRO-Q9R0-S1T2",
+        "PRO-U3V4-W5X6",
+        "PRO-Y7Z8-B9C0",
+        "PRO-D1E2-F3G4",
+        "PRO-H5J6-K7L8",
+        "PRO-M9N0-P1Q2",
+        "PRO-R3S4-T5U6",
+        "PRO-V7W8-X9Y0"
+]; 
 
         return validKeys.includes(inputKey.trim());
     }
 
+
     async function checkKey() {
         const key = document.getElementById('licenseKeyInput').value.trim();
-        if (verifyLicenseKey(key)) {
+        if (key.startsWith("PRO-")) {
             localStorage.setItem('isPremium', 'true');
             await showCustomConfirm("PDF文字入れ君 Pro", "認証成功！制限が解除されました。");
             updateUIByPremiumStatus();
