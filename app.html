@@ -641,7 +641,41 @@
             allowTouchScrolling: true,
             selection: true
         });
+        const workspaceEl = document.querySelector('.workspace');
+        let isDraggingCanvas = false;
+        let startX, startY;
 
+        fCanvas.on('mouse:down', function(opt) {
+            // スタンプモードではなく、かつオブジェクトが選択・クリックされていない場合
+            if (!isStampMode && !opt.target) {
+                isDraggingCanvas = true;
+                const e = opt.e;
+                startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+                startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+            }
+        });
+
+        fCanvas.on('mouse:move', function(opt) {
+            if (isDraggingCanvas) {
+                const e = opt.e;
+                const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : startX);
+                const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : startY);
+                
+                const dx = clientX - startX;
+                const dy = clientY - startY;
+
+                workspaceEl.scrollLeft -= dx;
+                workspaceEl.scrollTop -= dy;
+
+                startX = clientX;
+                startY = clientY;
+            }
+        });
+
+        fCanvas.on('mouse:up', function() {
+            isDraggingCanvas = false;
+        });
+        
         downloadBtn.addEventListener('click', async () => {
             if (!pdfDocBytes || !fontFileBytes) return;
 
