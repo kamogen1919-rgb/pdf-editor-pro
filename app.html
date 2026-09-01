@@ -202,8 +202,9 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            position: relative; /* 内部のフッターを絶対配置するための基準 */
-            overflow: hidden;   /* 右側エリア内での収まりを制御 */
+            position: relative;
+            overflow: hidden;
+            height: 100%;       /* 高さを親要素に合わせる */
         }
 
         .workspace {
@@ -215,7 +216,7 @@
             background-color: var(--bg-color);
             box-sizing: border-box;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 60px; /* フッターとPDFが重ならないように下の余白を増やす */
+            padding-bottom: 20px; /* フッターを外に出すため余白を削減または調整 */
         }
 
         .footer-area {
@@ -228,10 +229,8 @@
             justify-content: space-between;
             align-items: center;
             
-            /* --- 右側エリアの下部に常時固定する設定 --- */
-            position: absolute;
-            bottom: 0;
-            left: 0;
+            /* --- 絶対配置ではなく通常のフレックス要素として最下部に常時表示 --- */
+            flex-shrink: 0;
             width: 100%;
             box-sizing: border-box;
             z-index: 10;
@@ -428,12 +427,12 @@
                 flex-shrink: 0;
             }
             .workspace-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative; /* 内部のフッターを絶対配置するための基準 */
-            overflow: hidden;   /* 右側エリア内での収まりを制御 */
-            height: 100%;       /* 高さを親要素（main-container）の基準に合わせる */
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+                overflow: hidden;
+                height: 100%;
             }
             header {
                 padding: 4px 10px;
