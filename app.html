@@ -215,16 +215,14 @@
 
         .workspace {
             flex: 1;
-            /* 修正: 横方向・縦方向の両方のスクロールを確実に許可し、タッチスクロールを有効化 */
             overflow: auto;
             -webkit-overflow-scrolling: touch;
             display: flex;
-            /* justify-content: flex-start; を削除または center に変更 */
             justify-content: center; 
-            align-items: flex-start;
+            align-items: center; /* 上下左右の中央に配置し、周囲の余白を確保 */
             background-color: var(--bg-color);
             box-sizing: border-box;
-            padding: 20px;
+            padding: 50px; /* 周囲の余白を広くして見えやすくする */
         }
 
         .footer-area {
@@ -420,12 +418,12 @@
         .custom-modal-btn-ok { background-color: #10b981; color: white; }
 
         @media screen and (max-width: 1180px) {
-            body { 
-                height: auto !important; 
-                min-height: 100vh;
-                overflow-y: auto !important; /* 画面全体でのスクロールを強制有効化 */
-                overflow-x: hidden;
-            }
+    body { 
+        height: auto !important; 
+        min-height: 100vh;
+        overflow-y: auto !important; 
+        overflow-x: auto !important; /* 横スクロールを許可 */
+    }
             .main-container {
                 flex-direction: column !important;
                 height: auto !important;
