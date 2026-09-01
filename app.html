@@ -174,8 +174,10 @@
             flex-direction: column;
             gap: 12px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* iPad等の滑らかなスクロール用 */
             box-sizing: border-box;
             flex-shrink: 0;
+            height: 100%; /* 親要素の高さいっぱいに広げて内部スクロールさせる */
         }
 
         .sidebar > div {
@@ -398,7 +400,7 @@
         .custom-modal-btn-cancel { background-color: #f1f5f9; color: var(--text-color); }
         .custom-modal-btn-ok { background-color: #10b981; color: white; }
 
-        @media screen and (max-width: 768px) {
+        @media screen and (max-width: 1024px) {
             body { height: 100vh; overflow: auto; }
             .main-container {
                 flex-direction: column;
@@ -407,13 +409,15 @@
             }
             .sidebar {
                 width: 100%;
-                max-height: none;
+                max-height: 50vh; /* サイドバーが高くなりすぎないようにしつつ、中でスクロールできるようにする */
                 border-right: none;
                 border-bottom: 1px solid var(--border-color);
                 padding: 10px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
             .workspace-wrapper {
-                height: 70vh;
+                height: 60vh;
             }
             header {
                 padding: 4px 10px;
