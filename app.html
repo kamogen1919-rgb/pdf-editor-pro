@@ -33,9 +33,6 @@
             flex-direction: column;
             min-height: 100vh;
             overflow-x: hidden;
-            /* 修正: 固定ヘッダー・フッター分の上下余白を確保 */
-            padding-top: 52px;
-            padding-bottom: 45px;
         }
 
         /* ヘッダーエリア */
@@ -166,7 +163,6 @@
         .main-container {
             display: flex;
             flex: 1;
-            /* 修正: 高さを画面全体からヘッダー分を引いたサイズに固定 */
             min-height: calc(100vh - 52px);
             position: relative;
         }
@@ -220,13 +216,13 @@
         .workspace {
             flex: 1;
             overflow: auto;
+            -webkit-overflow-scrolling: touch;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            justify-content: center; 
+            align-items: center; /* 上下左右の中央に配置し、周囲の余白を確保 */
             background-color: var(--bg-color);
             box-sizing: border-box;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 20px;
+            padding: 50px; /* 周囲の余白を広くして見えやすくする */
         }
 
         .footer-area {
@@ -258,17 +254,20 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
+            /* 修正: 最小幅を維持しつつ、余白を持たせて横スクロール可能領域を確保 */
             min-width: max-content;
             min-height: max-content;
-            padding: 20px;
+            /* margin: auto; を削除（center配置と競合するため） */
         }
 
         .canvas-container-wrapper {
-            position: relative;
-            background: #fff;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border-radius: 4px;
-        }
+    position: relative;
+    background: #fff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    /* 修正: タッチ時にブラウザのパン＆ズームを完全に許可する */
+    touch-action: auto;
+}
 
         #bgCanvas { position: absolute; top: 0; left: 0; z-index: 1; }
         .canvas-container { position: relative; z-index: 2; }
@@ -299,8 +298,8 @@
         .file-upload-box.guide-active {
             background-color: var(--success-color) !important;
             color: #ffffff !important;
-            border: none !important; /* または書き出しボタンの枠線スタイルに合わせて調整 */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* btn-successに近いシャドウや挙動に合わせる */
+            border: none !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .font-download-link {
@@ -419,12 +418,12 @@
         .custom-modal-btn-ok { background-color: #10b981; color: white; }
 
         @media screen and (max-width: 1180px) {
-            body { 
-                height: auto !important; 
-                min-height: 100vh;
-                overflow-y: auto !important; /* 画面全体でのスクロールを強制有効化 */
-                overflow-x: hidden;
-            }
+    body { 
+        height: auto !important; 
+        min-height: 100vh;
+        overflow-y: auto !important; 
+        overflow-x: auto !important; /* 横スクロールを許可 */
+    }
             .main-container {
                 flex-direction: column !important;
                 height: auto !important;
@@ -635,7 +634,8 @@
 
         const fCanvas = new fabric.Canvas('fabricCanvas', { 
             freeDrawingBrush: null,
-            allowTouchScrolling: true 
+            allowTouchScrolling: true, // タッチスクロールを許可
+            fireRightClick: true
         });
 
         downloadBtn.addEventListener('click', async () => {
@@ -856,16 +856,14 @@
                 return;
             }
 
-            // 何も選択していない場所へのタップ処理（ダブルタップ判定）
             if (!options.target && pdfDocBytes) {
                 const currentTime = new Date().getTime();
                 const tapInterval = currentTime - lastTapTime;
                 const pointer = fCanvas.getPointer(options.e);
 
-                // 300ミリ秒以内に同じような場所を2回タップした場合を「ダブルタップ」とみなす
                 if (tapInterval < 300 && tapInterval > 0) {
                     createTextAndEdit('', pointer.x, pointer.y);
-                    lastTapTime = 0; // リセット
+                    lastTapTime = 0;
                 } else {
                     lastTapTime = currentTime;
                 }
@@ -898,7 +896,6 @@
         insertCheckBtn.addEventListener('click', () => toggleStamp('✓'));
         insertCircleBtn.addEventListener('click', () => toggleStamp('〇'));
 
-        // スタンプモードを解除する関数
         function cancelStampMode() {
             isStampMode = false;
             fCanvas.defaultCursor = 'default';
@@ -931,7 +928,6 @@
         document.getElementById('alignRightBtn').addEventListener('click', () => alignObjects('right'));
         document.getElementById('alignTopBtn').addEventListener('click', () => alignObjects('top'));
   
-// --- 選択オブジェクト削除処理の追加 ---
         function deleteActiveObject() {
             const activeObjects = fCanvas.getActiveObjects();
             if (activeObjects.length > 0) {
@@ -947,9 +943,7 @@
 
         deleteSelectedBtn.addEventListener('click', deleteActiveObject);
 
-        // PCキーボードの Delete / Backspace キーでも削除できるようにする
         window.addEventListener('keydown', (e) => {
-            // テキストの編集中（文字入力中）は誤爆を防ぐため除外
             const activeObj = fCanvas.getActiveObject();
             if (activeObj && activeObj.isEditing) return;
 
@@ -1039,7 +1033,6 @@
         nextPageBtn.addEventListener('click', async () => { if (currentPageNum < totalPageCount) await renderPage(currentPageNum + 1); });
 
         function checkReadyState() {
-            // PDFが選択されたら緑色のガイドを消し、未選択なら緑色を維持する
             if (pdfDocBytes) {
                 pdfUploadBox.classList.remove('guide-active');
                 saveFileBtn.disabled = false;
@@ -1116,7 +1109,9 @@
             const count = parseInt(localStorage.getItem('downloadCount') || '0');
             document.getElementById('remainingCount').textContent = Math.max(0, 3 - count);
         }
-    }function verifyLicenseKey(inputKey) {
+    }
+
+        function verifyLicenseKey(inputKey) {
         const validKeys = [
         "PRO-A1B2-C3D4",
         "PRO-E5F6-G7H8",
@@ -1348,11 +1343,9 @@
         "PRO-M9N0-P1Q2",
         "PRO-R3S4-T5U6",
         "PRO-V7W8-X9Y0"
-]; 
-
+];  
         return validKeys.includes(inputKey.trim());
     }
-
 
     async function checkKey() {
         const key = document.getElementById('licenseKeyInput').value.trim();
