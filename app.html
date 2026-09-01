@@ -202,8 +202,8 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            height: 100%;
+            position: relative; /* 内部のフッターを絶対配置するための基準 */
+            overflow: hidden;   /* 右側エリア内での収まりを制御 */
         }
 
         .workspace {
@@ -215,6 +215,7 @@
             background-color: var(--bg-color);
             box-sizing: border-box;
             -webkit-overflow-scrolling: touch;
+            padding-bottom: 45px; /* フッターとPDFが重ならないように下の余白を確保 */
         }
 
         .footer-area {
@@ -223,10 +224,17 @@
             color: #64748b;
             background-color: #ffffff;
             border-top: 1px solid var(--border-color);
-            flex-shrink: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            
+            /* --- 右側エリアの下部に常時固定する設定 --- */
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 10;
         }
 
         .footer-content {
@@ -401,32 +409,36 @@
 
         @media screen and (max-width: 1180px) {
             body { 
-                height: auto !important; 
-                min-height: 100vh;
-                overflow-y: auto !important; /* 画面全体でのスクロールを強制有効化 */
-                overflow-x: hidden;
+                height: 100vh !important; 
+                overflow: hidden !important; /* 画面全体の不要なスクロールを防ぎ、内部で制御 */
             }
             .main-container {
                 flex-direction: column !important;
-                height: auto !important;
-                overflow: visible !important;
+                height: calc(100vh - 52px) !important;
+                overflow: hidden !important;
+                display: flex !important;
             }
             .sidebar {
                 width: 100% !important;
-                max-height: none !important;
+                max-height: 40vh !important; /* サイドバーが高くなりすぎないよう制限し、スクロール可能に */
                 border-right: none !important;
                 border-bottom: 1px solid var(--border-color);
                 padding: 12px;
-                overflow-y: visible !important;
+                overflow-y: auto !important;
+                flex-shrink: 0;
             }
             .workspace-wrapper {
-                height: 75vh !important;
-                min-height: 500px;
+                flex: 1 !important;
+                height: auto !important;
+                min-height: 0 !important;
+                position: relative !important;
+                overflow: hidden !important;
             }
             header {
                 padding: 4px 10px;
-                height: auto;
+                height: 52px;
                 flex-wrap: wrap;
+                flex-shrink: 0;
             }
             .logo { font-size: 0.9rem; }
             .status-bubble { font-size: 0.65rem; max-width: 60vw; }
