@@ -263,13 +263,13 @@
         }
 
         .canvas-container-wrapper {
-            position: relative;
-            background: #fff;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border-radius: 4px;
-            /* 修正: タッチ操作時にブラウザのスクロール挙動を邪魔しないようにする */
-            touch-action: pan-x pan-y;
-        }
+    position: relative;
+    background: #fff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    /* 修正: タッチ時にブラウザのパン＆ズームを完全に許可する */
+    touch-action: auto;
+}
 
         #bgCanvas { position: absolute; top: 0; left: 0; z-index: 1; }
         .canvas-container { position: relative; z-index: 2; }
@@ -636,7 +636,8 @@
 
         const fCanvas = new fabric.Canvas('fabricCanvas', { 
             freeDrawingBrush: null,
-            allowTouchScrolling: true 
+            allowTouchScrolling: true, // タッチスクロールを許可
+            fireRightClick: true
         });
 
         downloadBtn.addEventListener('click', async () => {
