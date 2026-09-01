@@ -33,7 +33,6 @@
             flex-direction: column;
             min-height: 100vh;
             overflow-x: hidden;
-            /* 修正: 固定ヘッダー・フッター分の上下余白を確保 */
             padding-top: 52px;
             padding-bottom: 45px;
         }
@@ -48,7 +47,6 @@
             align-items: center;
             height: 52px;
             box-sizing: border-box;
-            /* 修正: 画面上部に常時固定 */
             position: fixed;
             top: 0;
             left: 0;
@@ -69,7 +67,6 @@
             white-space: nowrap;
         }
 
-        /* キャラクターと吹き出しのコンテナ */
         .character-balloon-container {
             display: flex;
             align-items: center;
@@ -85,7 +82,6 @@
             cursor: pointer;
         }
 
-        /* 吹き出しスタイル */
         .status-bubble {
             position: relative;
             background-color: var(--primary-color);
@@ -166,7 +162,6 @@
         .main-container {
             display: flex;
             flex: 1;
-            /* 修正: 高さを画面全体からヘッダー分を引いたサイズに固定 */
             min-height: calc(100vh - 52px);
             position: relative;
         }
@@ -183,7 +178,6 @@
             -webkit-overflow-scrolling: touch;
             box-sizing: border-box;
             flex-shrink: 0;
-            /* 修正: サイドバー自体もスクロール時に固定表示するため高さを画面追従に */
             height: calc(100vh - 52px);
             position: sticky;
             top: 52px;
@@ -227,7 +221,7 @@
             box-sizing: border-box;
             -webkit-overflow-scrolling: touch;
             padding-bottom: 20px;
-            /* 追加: タッチ操作での縦横スクロールをブラウザに許可する */
+            /* タッチ操作でのスクロールを許可 */
             touch-action: pan-x pan-y;
         }
 
@@ -240,8 +234,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            
-            /* 修正: 画面下部に常時固定 */
             position: fixed;
             bottom: 0;
             left: 0;
@@ -423,7 +415,7 @@
         @media screen and (max-width: 1180px) {
             body { 
                 height: 100vh !important; 
-                overflow: hidden !important; /* 画面全体の不要なスクロールを防ぎ、内部で制御 */
+                overflow: hidden !important;
             }
             .main-container {
                 flex-direction: column !important;
@@ -433,7 +425,7 @@
             }
             .sidebar {
                 width: 100% !important;
-                max-height: 40vh !important; /* サイドバーが高くなりすぎないよう制限し、スクロール可能に */
+                max-height: 40vh !important;
                 border-right: none !important;
                 border-bottom: 1px solid var(--border-color);
                 padding: 12px;
@@ -643,39 +635,6 @@
             allowTouchScrolling: true,
             selection: true
         });
-        const workspaceEl = document.querySelector('.workspace');
-        let isDraggingCanvas = false;
-        let startX, startY;
-
-        fCanvas.on('mouse:down', function(opt) {
-            if (!isStampMode && !opt.target) {
-                isDraggingCanvas = true;
-                const e = opt.e;
-                startX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-                startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-            }
-        });
-
-        fCanvas.on('mouse:move', function(opt) {
-            if (isDraggingCanvas) {
-                const e = opt.e;
-                const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : startX);
-                const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : startY);
-                
-                const dx = clientX - startX;
-                const dy = clientY - startY;
-
-                workspaceEl.scrollLeft -= dx;
-                workspaceEl.scrollTop -= dy;
-
-                startX = clientX;
-                startY = clientY;
-            }
-        });
-
-        fCanvas.on('mouse:up', function() {
-            isDraggingCanvas = false;
-        });
         
         downloadBtn.addEventListener('click', async () => {
             if (!pdfDocBytes || !fontFileBytes) return;
@@ -876,9 +835,7 @@
             }
         });
 
-        // ダブルタップを判定するための変数
         let lastTapTime = 0;
-        let lastTapPointer = null;
 
         fCanvas.on('mouse:down', (options) => {
             if (isStampMode) {
@@ -896,16 +853,14 @@
                 return;
             }
 
-            // 何も選択していない場所へのタップ処理（ダブルタップ判定）
             if (!options.target && pdfDocBytes) {
                 const currentTime = new Date().getTime();
                 const tapInterval = currentTime - lastTapTime;
                 const pointer = fCanvas.getPointer(options.e);
 
-                // 300ミリ秒以内に同じような場所を2回タップした場合を「ダブルタップ」とみなす
                 if (tapInterval < 300 && tapInterval > 0) {
                     createTextAndEdit('', pointer.x, pointer.y);
-                    lastTapTime = 0; // リセット
+                    lastTapTime = 0;
                 } else {
                     lastTapTime = currentTime;
                 }
@@ -938,7 +893,6 @@
         insertCheckBtn.addEventListener('click', () => toggleStamp('✓'));
         insertCircleBtn.addEventListener('click', () => toggleStamp('〇'));
 
-        // スタンプモードを解除する関数
         function cancelStampMode() {
             isStampMode = false;
             fCanvas.defaultCursor = 'default';
@@ -1052,7 +1006,6 @@
         nextPageBtn.addEventListener('click', async () => { if (currentPageNum < totalPageCount) await renderPage(currentPageNum + 1); });
 
         function checkReadyState() {
-            // PDFが選択されたら緑色のガイドを消し、未選択なら緑色を維持する
             if (pdfDocBytes) {
                 pdfUploadBox.classList.remove('guide-active');
                 saveFileBtn.disabled = false;
@@ -1129,7 +1082,9 @@
             const count = parseInt(localStorage.getItem('downloadCount') || '0');
             document.getElementById('remainingCount').textContent = Math.max(0, 3 - count);
         }
-    }function verifyLicenseKey(inputKey) {
+    }
+
+    function verifyLicenseKey(inputKey) {
         const validKeys = [
         "PRO-A1B2-C3D4",
         "PRO-E5F6-G7H8",
@@ -1366,10 +1321,9 @@
         return validKeys.includes(inputKey.trim());
     }
 
-
     async function checkKey() {
         const key = document.getElementById('licenseKeyInput').value.trim();
-        if (key.startsWith("PRO-")) {
+        if (verifyLicenseKey(key)) {
             localStorage.setItem('isPremium', 'true');
             await showCustomConfirm("PDF文字入れ君 Pro", "認証成功！制限が解除されました。");
             updateUIByPremiumStatus();
