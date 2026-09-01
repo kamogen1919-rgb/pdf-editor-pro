@@ -223,7 +223,8 @@
             overflow: auto;
             -webkit-overflow-scrolling: touch;
             display: flex;
-            justify-content: flex-start;
+            /* justify-content: flex-start; を削除または center に変更 */
+            justify-content: center; 
             align-items: flex-start;
             background-color: var(--bg-color);
             box-sizing: border-box;
@@ -262,7 +263,7 @@
             /* 修正: 最小幅を維持しつつ、余白を持たせて横スクロール可能領域を確保 */
             min-width: max-content;
             min-height: max-content;
-            margin: auto;
+            /* margin: auto; を削除（center配置と競合するため） */
         }
 
         .canvas-container-wrapper {
