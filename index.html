@@ -56,6 +56,13 @@
             margin-bottom: 30px;
             font-weight: 600;
         }
+
+        .hero h3 {
+            font-size: 1.3rem;
+            color: #ffffff;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
         
         .hero-content-box {
             display: inline-flex;
@@ -80,7 +87,15 @@
             margin: 0 0 15px 0;
             line-height: 1.7;
         }
+
+        .hero {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+           
+            
+        }
         
+      
         .use-cases {
             display: flex;
             gap: 8px;
@@ -123,7 +138,7 @@
             justify-content: center;
             align-items: center;
             gap: 15px;
-            margin-top: 40px;
+            margin-top: 0px;
             flex-wrap: wrap;
         }
         .step-badge {
@@ -166,8 +181,9 @@
         }
 
         .features {
+            
             max-width: 1000px;
-            margin: 60px auto 0 auto;
+            margin: 20px auto 0 auto;
             padding: 0 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -193,6 +209,56 @@
             background: #ffffff;
             margin-top: 60px;
         }
+
+       
+        .price-card {
+            text-align: center;
+        
+            border: 0px solid rgba(147, 197, 253, 0.25);
+            padding: 10px 10px;
+            border-radius: 14px;
+            max-width: 400px;
+            margin: 0 auto 0px auto;
+        }
+       
+        .price-card .big-price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin: 8px 0 0;
+        }
+        .price-card .buyout {
+            font-weight: 600;
+            margin: 0 0 18px;
+        }
+    
+  
+        .price-card .small-note {
+            
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+       
+        .local-note h3 {
+            margin-top: 0;
+        }
+        @media (max-width: 600px) {
+            header { padding: 16px 20px; }
+            .hero { padding: 50px 15px; }
+            .hero h1 { font-size: 1.8rem; }
+            .hero h2 { font-size: 1.1rem; }
+            .hero-content-box {
+                flex-direction: column;
+                text-align: center;
+                padding: 22px 20px;
+            }
+            .hero-character { width: 75px; height: 75px; order: -1; }
+            .use-cases { justify-content: center; }
+            .steps-container { gap: 8px; }
+            .step-arrow { display: none; }
+            
+        }
+
     </style>
 </head>
 <body>
@@ -207,10 +273,12 @@
     <div class="hero">
         <h1>インストール不要のPDF文字入れツール</h1>
         <h2>「 PDF文字入れ君 Pro 」</h2>
-        
+
         <div class="hero-content-box">
             <div class="hero-text-area">
-                <p>"ブラウザだけでPDFに綺麗に文字やレ点、〇を入れられるWebツール"<br>機密データもサーバーに送信されないため安心してご利用いただけます。<br>PDF書類への直接の書き込み・修正に便利です！<p>
+                <p>ブラウザだけでPDFに文字・レ点・〇を簡単に追加できます。<br>
+                PDFデータをサーバーに送信せず、ブラウザ上で処理できます。<br>
+                「PDFにちょっと文字を入れたい」という用途に便利です。</p>
                 <div class="use-cases">
                     <span class="use-case-tag">📝 履歴書</span>
                     <span class="use-case-tag">📋 各種申請書</span>
@@ -219,23 +287,39 @@
                 </div>
             </div>
             <img src="character.png" alt="キャラクター" class="hero-character">
-        </div><br>
+        </div>
+<br>
         
-        <a href="app.html" class="btn-cta" target="_blank" rel="noopener noreferrer">🚀 今すぐ無料でアプリを使ってみる</a>
+<p class="trial">🎁 まずは無料で3回お試しいただけます</p>
+            <a href="app.html" class="btn-cta" target="_blank" rel="noopener noreferrer">
+                🚀 無料で試してみる
+            </a>
+            
 
-        <div class="steps-container">
+            <section class="price-card">
+  
+            <p class="small-note">無料で使ってみて、必要になったらPro版をご購入ください。</p>
+            
+            <div class="big-price">980円（税込）</div>
+            <p class="buyout">買い切り・月額料金なし</p>
+        
+    </section>
+            <div class="steps-container">
             <div class="step-badge"><span>STEP 1</span>PDF読み込み</div>
             <div class="step-arrow">➔</div>
             <div class="step-badge"><span>STEP 2</span>フォント読み込み</div>
             <div class="step-arrow">➔</div>
             <div class="step-badge"><span>STEP 3</span>文字入れ＆PDF書き出し</div>
-        </div>
+      
+    </div>
     </div>
 
+    
+
     <div class="features">
-        <div class="feature-card">
-            <h3>🔒 100%安全なローカル処理</h3>
-            <p>ファイルはあなたのパソコン（ブラウザ内）だけで処理されるため、外部にデータが漏洩する心配がありません。</p>
+        <div class="feature-card local-note">
+            <h3>🔒 PDFデータをサーバーに送信しないローカル処理</h3>
+            <p>PDFファイルはお使いのパソコンのブラウザ内で処理され、サーバーへアップロードされません。機密性の高い書類にも使いやすい設計です。</p>
         </div>
         <div class="feature-card">
             <h3>🔤 自由なフォント対応、<br>文字情報の保存</h3>
