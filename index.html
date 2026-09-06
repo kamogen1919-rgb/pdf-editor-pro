@@ -20,17 +20,19 @@
             line-height: 1.6;
         }
         header {
-            background: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 20px 40px;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            height: 52px;
+            box-sizing: border-box;
         }
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             font-size: 1.25rem;
             font-weight: 800;
             color: var(--primary-color);
@@ -39,15 +41,17 @@
             width: 32px;
             height: 32px;
             object-fit: contain;
+            margin-bottom: 5px;
         }
         .hero {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            background: linear-gradient(180deg, #2f2f43 0%, #385081 100%);
             color: #ffffff;
-            padding: 70px 20px;
+            padding: 50px 10px;
             text-align: center;
         }
         .hero h1 {
             font-size: 2.3rem;
+            color: #ffffff;
             margin-bottom: 10px;
         }
         .hero h2 {
@@ -56,25 +60,17 @@
             margin-bottom: 30px;
             font-weight: 600;
         }
-
-        .hero h3 {
-            font-size: 1.3rem;
-            color: #ffffff;
-            margin-bottom: 30px;
-            font-weight: 600;
-        }
-        
         .hero-content-box {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 25px;
-            background: linear-gradient(135deg, rgba(51, 65, 85, 0.55) 0%, rgba(30, 58, 138, 0.45) 100%);
+            gap: 0px;
+            background: #303d6d;
             border: 0px solid rgba(147, 197, 253, 0.25);
             padding: 25px 35px;
             border-radius: 14px;
             max-width: 800px;
-            margin: 0 auto 30px auto;
+            margin: 0 auto 20px auto;
             text-align: left;
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
@@ -87,15 +83,11 @@
             margin: 0 0 15px 0;
             line-height: 1.7;
         }
-
-        .hero {
-            font-size: 0.9rem;
+        .trial {
+            font-size: 0.95rem;
             color: #cbd5e1;
-           
-            
+            margin-bottom: 15px;
         }
-        
-      
         .use-cases {
             display: flex;
             gap: 8px;
@@ -109,14 +101,12 @@
             border-radius: 20px;
             font-size: 0.82rem;
         }
-
         .hero-character {
             width: 85px;
             height: 85px;
             object-fit: contain;
             flex-shrink: 0;
         }
-
         .btn-cta {
             display: inline-block;
             background-color: #10b981;
@@ -132,13 +122,12 @@
         .btn-cta:hover {
             background-color: #059669;
         }
-        
         .steps-container {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 15px;
-            margin-top: 0px;
+            margin-top: 35px;
             flex-wrap: wrap;
         }
         .step-badge {
@@ -158,7 +147,6 @@
             color: #64748b;
             font-weight: bold;
         }
-
         .environment-notice {
             max-width: 960px;
             margin: 40px auto 0 auto;
@@ -179,9 +167,7 @@
             margin-bottom: 6px;
             font-size: 1rem;
         }
-
         .features {
-            
             max-width: 1000px;
             margin: 20px auto 0 auto;
             padding: 0 20px;
@@ -209,36 +195,31 @@
             background: #ffffff;
             margin-top: 60px;
         }
-
-       
         .price-card {
             text-align: center;
-        
             border: 0px solid rgba(147, 197, 253, 0.25);
-            padding: 10px 10px;
+            padding: 0px;
             border-radius: 14px;
             max-width: 400px;
-            margin: 0 auto 0px auto;
+            margin: 15px auto 0 auto;
         }
-       
         .price-card .big-price {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 800;
-            color: var(--primary-color);
-            margin: 8px 0 0;
+            color: #60a5fa;
+            margin: 4px 0 0;
         }
         .price-card .buyout {
             font-weight: 600;
-            margin: 0 0 18px;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            margin: 4px 0 0;
         }
-    
-  
         .price-card .small-note {
-            
-            font-size: 0.85rem;
-            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-bottom: 12px;
         }
-       
         .local-note h3 {
             margin-top: 0;
         }
@@ -256,9 +237,7 @@
             .use-cases { justify-content: center; }
             .steps-container { gap: 8px; }
             .step-arrow { display: none; }
-            
         }
-
     </style>
 </head>
 <body>
@@ -276,45 +255,39 @@
 
         <div class="hero-content-box">
             <div class="hero-text-area">
-                <p>ブラウザだけでPDFに文字・レ点・〇を簡単に追加できます。<br>
-                PDFデータをサーバーに送信せず、ブラウザ上で処理できます。<br>
-                「PDFにちょっと文字を入れたい」という用途に便利です。</p>
+                <p>・ブラウザだけでPDFに文字・レ点・〇を簡単に追加できます。<br>
+                ・PDFデータをサーバーに送信せず、ブラウザ上で処理できます。<br>
+                ・「PDFにちょっと文字を入れたい」という用途に便利です。</p>
                 <div class="use-cases">
                     <span class="use-case-tag">📝 履歴書</span>
                     <span class="use-case-tag">📋 各種申請書</span>
-                    <span class="use-case-tag">🏗️ 公共工事PDFデータ</span>
+                    <span class="use-case-tag">🏗️ 公空工事PDFデータ</span>
                     <span class="use-case-tag">✨ ちょっとした書き込みに</span>
                 </div>
             </div>
             <img src="character.png" alt="キャラクター" class="hero-character">
         </div>
-<br>
-        
-<p class="trial">🎁 まずは無料で3回お試しいただけます</p>
-            <a href="app.html" class="btn-cta" target="_blank" rel="noopener noreferrer">
-                🚀 無料で試してみる
-            </a>
-            
 
-            <section class="price-card">
-  
+        <p class="trial">🎁 まずは無料で3回お試しいただけます</p>
+        
+        <a href="app.html" class="btn-cta" target="_blank" rel="noopener noreferrer">
+            🚀 無料で試してみる
+        </a>
+
+        <section class="price-card">
             <p class="small-note">無料で使ってみて、必要になったらPro版をご購入ください。</p>
-            
             <div class="big-price">980円（税込）</div>
             <p class="buyout">買い切り・月額料金なし</p>
-        
-    </section>
-            <div class="steps-container">
+        </section>
+
+        <div class="steps-container">
             <div class="step-badge"><span>STEP 1</span>PDF読み込み</div>
             <div class="step-arrow">➔</div>
             <div class="step-badge"><span>STEP 2</span>フォント読み込み</div>
             <div class="step-arrow">➔</div>
             <div class="step-badge"><span>STEP 3</span>文字入れ＆PDF書き出し</div>
-      
+        </div>
     </div>
-    </div>
-
-    
 
     <div class="features">
         <div class="feature-card local-note">
