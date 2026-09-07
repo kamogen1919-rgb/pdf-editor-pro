@@ -29,28 +29,27 @@
         header {
             background-color: var(--panel-bg);
             border-bottom: 1px solid var(--border-color);
-            padding: 12px 24px;
+            padding: 0px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 60px;
+            height: 52px;
             box-sizing: border-box;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
             font-size: 1.25rem;
             font-weight: 800;
             color: var(--primary-color);
-            text-decoration: none;
         }
-
         .logo img {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             object-fit: contain;
+            margin-bottom: 4px;
         }
 
         .back-link {
@@ -145,11 +144,10 @@
 
     <!-- ヘッダー -->
     <header>
-        <a href="index.html" class="logo">
-            <img src="character.png" alt="マスコットキャラクター">
+        <div class="logo">
             PDF文字入れ君 Pro
-        </a>
-        
+            <img src="character.png" alt="マスコットキャラクター">
+        </div>
     </header>
 
     <!-- メインコンテンツ -->
