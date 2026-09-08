@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kamogen1919-rgb.github.io/pdf-editor-pro/sitemap.xml
