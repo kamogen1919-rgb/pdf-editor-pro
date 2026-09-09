@@ -267,6 +267,19 @@
             .steps-container { gap: 8px; }
             .step-arrow { display: none; }
         }
+        .demo-video {
+    max-width: 720px;
+    margin: 30px auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.demo-video video {
+    display: block;
+    width: 100%;
+    height: auto;
+}
     </style>
 </head>
 <body>
@@ -296,7 +309,11 @@
             </div>
             <img src="character.png" alt="キャラクター" class="hero-character">
         </div>
-
+        <div class="demo-video">
+    <video autoplay muted loop playsinline>
+        <source src="demo.mp4" type="video/mp4">
+    </video>
+</div>
         <p class="trial">🎁 まずは無料で3回お試しいただけます</p>
         
         <a href="app.html" class="btn-cta" target="_blank" rel="noopener noreferrer">
