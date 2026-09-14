@@ -649,7 +649,10 @@
 
             fCanvas.setWidth(displayWidth);
             fCanvas.setHeight(displayHeight);
-            fCanvas.setZoom(renderMultiplier);
+            // Fabric.jsは表示倍率として1倍を維持します。
+            // devicePixelRatio/renderMultiplierをsetZoomへ入れると、
+            // 画面上の文字サイズ・座標が実寸の2～数倍になってしまいます。
+            fCanvas.setZoom(1);
 
             canvasWrapper.style.width = displayWidth + 'px';
             canvasWrapper.style.height = displayHeight + 'px';
@@ -703,7 +706,7 @@
             const text = new fabric.IText(initialTest, {
                 left: x,
                 top: y,
-                fontSize: Math.round(16 * (currentScale / 1.5)),
+                fontSize: 16,
                 fontFamily: customFontName,
                 fill: '#000000',
                 editingBorderColor: '#2563eb',
@@ -743,28 +746,6 @@
             statusInfo.textContent = "PDFを出力中...";
 
             try {
-                /*
-                 * スマホ互換性を最優先したPDF出力方式です。
-                 *
-                 * これまでの方式：
-                 * Fabric.js → pdf-lib drawText → fontkit
-                 *
-                 * では、スマホブラウザ上で日本語フォントの埋め込み等が
-                 * 原因となって文字が表示されない可能性があります。
-                 *
-                 * 今回は、
-                 * Fabric上の文字情報
-                 *       ↓
-                 * ブラウザのCanvasへ描画
-                 *       ↓
-                 * PNGとしてPDFへ貼り付け
-                 *
-                 * とします。
-                 *
-                 * この方式なら、日本語・英数字・✓・〇を
-                 * 「見た目どおり」にPDFへ出力できます。
-                 */
-
                 // 現在ページのオブジェクトを保存
                 pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => ({
                     type: obj.type,
@@ -781,13 +762,26 @@
                     fill: obj.fill || '#000000'
                 }));
 
-                const { PDFDocument } = window.PDFLib;
+                const { PDFDocument, degrees } = window.PDFLib;
                 const pdfDoc = await PDFDocument.load(pdfDocBytes.slice(0));
-
                 const pages = pdfDoc.getPages();
 
-                // 現在表示しているページだけでなく、
-                // 保存済みページも順番に処理します。
+                if (document.fonts && document.fonts.ready) {
+                    await document.fonts.ready;
+                }
+
+                /*
+                 * PDFへの文字貼り付けは高解像度PNG方式。
+                 *
+                 * 重要：
+                 * Fabricのオブジェクト座標は「表示用CSS座標」。
+                 * PDF座標へは currentScale だけを使って変換します。
+                 *
+                 * 画像解像度はPDF 1ptあたり3pxで作るため、
+                 * スマホでも文字がぼやけにくくなります。
+                 */
+                const rasterScale = 3;
+
                 for (const pageNumStr in pageSavedObjects) {
                     const pageNum = parseInt(pageNumStr, 10);
                     const objects = pageSavedObjects[pageNum];
@@ -800,128 +794,84 @@
                     const { width: pageWidth, height: pageHeight } =
                         targetPage.getSize();
 
-                    /*
-                     * PDF表示時と同じCSS座標系で透明Canvasを作成。
-                     *
-                     * currentScale:
-                     * PDFポイント → 画面CSS px
-                     *
-                     * したがって、
-                     * Canvas幅 = PDF幅 × currentScale
-                     */
-                    let pageScale = currentScale;
-
-                    // 現在ページ以外についても、PDFの縦横比から
-                    // 表示用Canvasサイズを計算する。
-                    const canvasWidth = Math.max(
-                        1,
-                        Math.round(pageWidth * pageScale)
-                    );
-                    const canvasHeight = Math.max(
-                        1,
-                        Math.round(pageHeight * pageScale)
-                    );
-
                     const overlayCanvas = document.createElement('canvas');
-                    overlayCanvas.width = canvasWidth;
-                    overlayCanvas.height = canvasHeight;
+                    overlayCanvas.width = Math.max(1, Math.round(pageWidth * rasterScale));
+                    overlayCanvas.height = Math.max(1, Math.round(pageHeight * rasterScale));
 
                     const ctx = overlayCanvas.getContext('2d');
-
-                    // 背景は透明のまま
-                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-                    // フォント読み込み完了を待つ
-                    if (document.fonts && document.fonts.ready) {
-                        await document.fonts.ready;
-                    }
+                    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                    ctx.textBaseline = 'top';
 
                     for (const obj of objects) {
                         if (!obj.text || obj.text.trim() === '') continue;
 
-                        const fs = Math.max(
-                            1,
-                            (obj.fontSize || 16) * (obj.scaleY || 1)
-                        );
+                        // Fabric CSS座標 → PDFポイント → 高解像度Canvas px
+                        const pdfX = (obj.left || 0) / currentScale;
+                        const pdfTop = (obj.top || 0) / currentScale;
 
-                        const sx = obj.scaleX || 1;
+                        const pdfFontSize =
+                            ((obj.fontSize || 16) * (obj.scaleY || 1))
+                            / currentScale;
+
+                        const pxFontSize = Math.max(1, pdfFontSize * rasterScale);
+                        const scaleX = obj.scaleX || 1;
 
                         ctx.save();
 
-                        // Fabricと同じ座標系へ
-                        const x = (obj.left || 0);
-                        const y = (obj.top || 0);
+                        // Canvas上でPDF座標系（左上原点）に配置
+                        let drawX = pdfX * rasterScale;
+                        let drawY = pdfTop * rasterScale;
 
-                        // 回転
-                        if (obj.angle) {
-                            // 回転中心を概算
-                            ctx.translate(x, y);
-                            ctx.rotate((obj.angle * Math.PI) / 180);
-                            ctx.translate(-x, -y);
-                        }
-
-                        ctx.font = `${fs}px ${obj.fontFamily || customFontName}`;
+                        ctx.font = `${pxFontSize}px ${obj.fontFamily || customFontName}`;
                         ctx.fillStyle = obj.fill || '#000000';
-                        ctx.textBaseline = 'top';
 
+                        // Fabricのoriginを考慮
                         if (obj.originX === 'center' || obj.originY === 'center') {
                             const measuredWidth =
-                                ctx.measureText(obj.text).width * sx;
-
-                            let drawX = x;
-                            let drawY = y;
+                                ctx.measureText(obj.text).width * scaleX;
 
                             if (obj.originX === 'center') {
-                                drawX = x - measuredWidth / 2;
+                                drawX -= measuredWidth / 2;
                             }
 
                             if (obj.originY === 'center') {
-                                drawY = y - fs / 2;
+                                drawY -= pxFontSize / 2;
                             }
+                        }
 
-                            ctx.save();
+                        // 回転中心を文字位置に合わせる
+                        if (obj.angle) {
+                            ctx.translate(
+                                (pdfX * rasterScale),
+                                (pdfTop * rasterScale)
+                            );
+                            ctx.rotate((obj.angle * Math.PI) / 180);
+                            ctx.translate(
+                                -(pdfX * rasterScale),
+                                -(pdfTop * rasterScale)
+                            );
+                        }
+
+                        if (scaleX !== 1) {
                             ctx.translate(drawX, drawY);
-
-                            if (sx !== 1) {
-                                ctx.scale(sx, 1);
-                            }
-
+                            ctx.scale(scaleX, 1);
                             ctx.fillText(obj.text, 0, 0);
-                            ctx.restore();
-
                         } else {
-                            ctx.save();
-                            ctx.translate(x, y);
-
-                            if (sx !== 1) {
-                                ctx.scale(sx, 1);
-                            }
-
-                            ctx.fillText(obj.text, 0, 0);
-                            ctx.restore();
+                            ctx.fillText(obj.text, drawX, drawY);
                         }
 
                         ctx.restore();
                     }
 
-                    /*
-                     * 透明PNGとしてPDFへ貼り付ける。
-                     * PDFページ全体と同じサイズなので、
-                     * 座標変換によるズレを最小化できます。
-                     */
-                    const pngDataUrl = overlayCanvas.toDataURL(
-                        'image/png',
-                        1.0
-                    );
-
+                    const pngDataUrl = overlayCanvas.toDataURL('image/png');
                     const pngImage = await pdfDoc.embedPng(pngDataUrl);
 
+                    // PDFページ全面に1:1で貼る
                     targetPage.drawImage(pngImage, {
                         x: 0,
                         y: 0,
                         width: pageWidth,
-                        height: pageHeight,
-                        opacity: 1
+                        height: pageHeight
                     });
                 }
 
@@ -933,7 +883,6 @@
                 );
 
                 const url = URL.createObjectURL(blob);
-
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = 'edited_document.pdf';
@@ -943,12 +892,9 @@
                 link.click();
                 document.body.removeChild(link);
 
-                setTimeout(() => {
-                    URL.revokeObjectURL(url);
-                }, 5000);
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
 
-                statusInfo.textContent =
-                    "PDF書き出し完了！文字を画像としてPDFに反映しました。";
+                statusInfo.textContent = "PDF書き出し完了！";
 
             } catch (error) {
                 console.error("PDF書き出しエラー:", error);
