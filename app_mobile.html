@@ -84,7 +84,6 @@
             color: var(--primary-color);
         }
 
-        /* モード切り替えボタン用の特別色 */
         .tool-btn.mode-zoom {
             background-color: #fef08a;
             border-color: #eab308;
@@ -114,36 +113,34 @@
             background-color: var(--danger-color);
         }
 
-        /* ワークスペース（ピンチズーム・スクロール対応） */
+        /* ワークスペース */
         .workspace {
             flex: 1;
             position: relative;
             width: 100%;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow: hidden; /* 独自ズーム制御のためスクロールバーは非表示に */
             background-color: var(--bg-color);
-            touch-action: pan-x pan-y pinch-zoom;
+            touch-action: none; /* ブラウザ標準のジェスチャーを完全無効化してJSで制御 */
         }
 
         .workspace-inner {
-            position: relative;
-            min-width: 100%;
-            min-height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 40px;
-            box-sizing: border-box;
-            touch-action: pan-x pan-y pinch-zoom;
+            touch-action: none;
         }
 
         .canvas-container-wrapper {
-            position: relative;
+            position: absolute;
             background: #fff;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             border-radius: 4px;
-            transform-origin: center center;
-            touch-action: pan-x pan-y pinch-zoom;
+            transform-origin: 0 0;
+            touch-action: none;
+            will-change: transform;
         }
 
         #bgCanvas {
@@ -152,14 +149,11 @@
             left: 0;
             z-index: 1;
             display: block;
-            touch-action: pan-x pan-y pinch-zoom;
         }
 
-        /* Fabricのコンテナ：ズームモード時はタッチを透過させる */
         .canvas-container {
             position: relative;
             z-index: 2;
-            touch-action: pan-x pan-y pinch-zoom;
         }
 
         /* 下部アクションバー */
@@ -232,7 +226,6 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
 
-        /* 非表示用ファイル入力 */
         input[type="file"] {
             display: none;
         }
@@ -273,10 +266,10 @@
             <button id="deleteBtn" class="delete-btn">選択中を削除</button>
         </div>
 
-        <!-- ワークスペース（ピンチズーム・スクロール対応） -->
+        <!-- ワークスペース -->
         <div class="workspace" id="workspace">
             <div class="workspace-inner" id="workspaceInner">
-                <div class="canvas-container-wrapper" id="canvasWrapper" style="width: 100px; height: 100px;">
+                <div class="canvas-container-wrapper" id="canvasWrapper">
                     <canvas id="bgCanvas"></canvas>
                     <canvas id="fabricCanvas"></canvas>
                 </div>
@@ -293,11 +286,11 @@
                 <button id="loadPdfBtn" class="action-btn">PDF読み込み</button>
                 <button id="exportPdfBtn" class="action-btn export" disabled>PDF書き出し</button>
             </div>
-            <div id="statusInfo" class="sub-info">「移動・ズーム」モードでピンチイン・アウトが可能です</div>
+            <div id="statusInfo" class="sub-info">「移動・ズーム」モード：2本指で拡大縮小・1本指で移動</div>
         </div>
     </div>
 
-    <!-- 隠しファイル入力 (PDF用 / JSON用) -->
+    <!-- 隠しファイル入力 -->
     <input type="file" id="fileInput" accept="application/pdf">
     <input type="file" id="jsonInput" accept=".json">
 
@@ -328,7 +321,18 @@
     let originalPdfWidth = 0;
     let originalPdfHeight = 0;
 
-    let currentMode = 'zoom'; // 初期値は「移動・ズーム」モード
+    let currentMode = 'zoom';
+
+    // ズーム・パン用の変数
+    let zoomScale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isTransforming = false;
+    let startTouches = [];
+    let startDist = 0;
+    let startZoom = 1;
+    let startPanX = 0;
+    let startPanY = 0;
 
     window.addEventListener('DOMContentLoaded', async () => {
         const fileInput = document.getElementById('fileInput');
@@ -352,8 +356,7 @@
         const fCanvas = new fabric.Canvas('fabricCanvas', {
             fireRightClick: true,
             stopContextMenu: true,
-            selection: true,
-            interactive: false // 初期状態ではキャンバスのタッチを無効化（背景のズームを優先）
+            selection: true
         });
 
         await loadDefaultFont();
@@ -366,12 +369,11 @@
             modeCircleBtn.classList.toggle('active', mode === 'circle');
 
             if (mode === 'zoom') {
-                fCanvas.isDrawingMode = false;
                 fCanvas.selection = false;
-                fCanvas.upperCanvasEl.style.pointerEvents = 'none'; // タッチを背景（ワークスペース）にスルーさせる
-                statusInfo.textContent = "「移動・ズーム」：2本指で拡大縮小・スクロールができます";
+                fCanvas.discardActiveObject();
+                fCanvas.renderAll();
+                statusInfo.textContent = "「移動・ズーム」：2本指で拡大縮小・1本指でスクロール";
             } else {
-                fCanvas.upperCanvasEl.style.pointerEvents = 'auto'; // タッチをFabric.jsで受け取る
                 fCanvas.selection = true;
                 if (mode === 'text') {
                     statusInfo.textContent = "「文字入力」：タップした場所に文字を入力します";
@@ -388,6 +390,83 @@
         modeCheckBtn.addEventListener('click', () => setMode('check'));
         modeCircleBtn.addEventListener('click', () => setMode('circle'));
 
+        // --- 独自タッチ操作（ピンチズーム ＆ パン移動）の実装 ---
+        workspace.addEventListener('touchstart', (e) => {
+            if (currentMode !== 'zoom') return;
+            startTouches = Array.from(e.touches);
+            if (startTouches.length === 2) {
+                startDist = getTouchDistance(startTouches[0], startTouches[1]);
+                startZoom = zoomScale;
+            } else if (startTouches.length === 1) {
+                startPanX = panX;
+                startPanY = panY;
+            }
+            isTransforming = true;
+        }, { passive: false });
+
+        workspace.addEventListener('touchmove', (e) => {
+            if (currentMode !== 'zoom' || !isTransforming) return;
+            e.preventDefault(); // 画面の意図しないスクロールやバウンスを完全ブロック
+
+            const currentTouches = Array.from(e.touches);
+
+            if (currentTouches.length === 2 && startTouches.length === 2) {
+                // 2本指：ピンチズーム
+                const currentDist = getTouchDistance(currentTouches[0], currentTouches[1]);
+                const scaleFactor = currentDist / startDist;
+                let newZoom = startZoom * scaleFactor;
+                
+                // ズーム倍率の制限 (0.5倍 〜 5倍)
+                if (newZoom < 0.5) newZoom = 0.5;
+                if (newZoom > 5.0) newZoom = 5.0;
+
+                zoomScale = newZoom;
+                updateCanvasTransform();
+            } else if (currentTouches.length === 1 && startTouches.length === 1) {
+                // 1本指：パン移動
+                const dx = currentTouches[0].clientX - startTouches[0].clientX;
+                const dy = currentTouches[0].clientY - startTouches[0].clientY;
+
+                panX = startPanX + dx;
+                panY = startPanY + dy;
+                updateCanvasTransform();
+            }
+        }, { passive: false });
+
+        workspace.addEventListener('touchend', (e) => {
+            if (currentMode !== 'zoom') return;
+            startTouches = Array.from(e.touches);
+            if (startTouches.length === 0) {
+                isTransforming = false;
+            } else if (startTouches.length === 1) {
+                startPanX = panX;
+                startPanY = panY;
+            }
+        });
+
+        function getTouchDistance(t1, t2) {
+            const dx = t1.clientX - t2.clientX;
+            const dy = t1.clientY - t2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function updateCanvasTransform() {
+            canvasWrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+        }
+
+        function resetZoomAndPan() {
+            zoomScale = 1;
+            // 初期位置を画面中央付近に配置
+            const workspaceW = workspace.clientWidth;
+            const workspaceH = workspace.clientHeight;
+            const wrapperW = canvasWrapper.offsetWidth;
+            const wrapperH = canvasWrapper.offsetHeight;
+            
+            panX = (workspaceW - wrapperW) / 2;
+            panY = (workspaceH - wrapperH) / 2;
+            updateCanvasTransform();
+        }
+
         deleteBtn.addEventListener('click', () => {
             const activeObjects = fCanvas.getActiveObjects();
             if (activeObjects.length > 0) {
@@ -396,7 +475,7 @@
                 fCanvas.renderAll();
                 statusInfo.textContent = "選択した項目を削除しました";
             } else {
-                statusInfo.textContent = "削除する項目（または選択中の文字）がありません";
+                statusInfo.textContent = "削除する項目がありません";
             }
         });
 
@@ -439,8 +518,6 @@
                         fCanvas.renderAll();
                         statusInfo.textContent = "文字情報を読み込みました";
                     });
-                } else {
-                    statusInfo.textContent = "現在のページの保存データはありません";
                 }
             } catch (err) {
                 console.error(err);
@@ -476,9 +553,10 @@
                 totalPageCount = pdfDocJS.numPages;
 
                 await renderPage(currentPageNum);
+                resetZoomAndPan();
                 
                 exportPdfBtn.disabled = false;
-                setMode('zoom'); // 読み込み後はズームモードをデフォルトにする
+                setMode('zoom');
             } catch (error) {
                 console.error(error);
                 statusInfo.textContent = "PDFの読み込みに失敗しました";
@@ -517,10 +595,10 @@
             await pdfPage.render({ canvasContext: bgCtx, viewport: viewport }).promise;
         }
 
-        // タップ（クリック）時の処理：文字・スタンプ配置
+        // タップ時の処理：ズームモード以外の時のみ文字・スタンプ配置
         fCanvas.on('mouse:down', (options) => {
             if (!pdfDocBytes) return;
-            if (currentMode === 'zoom') return; // ズームモード時は無効
+            if (currentMode === 'zoom') return;
             if (options.target) return;
 
             const pointer = fCanvas.getPointer(options.e);
