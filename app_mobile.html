@@ -734,8 +734,8 @@
         }
 
         async function exportPDF() {
-            if (!pdfDocBytes || !fontFileBytes) {
-                statusInfo.textContent = "フォントまたはPDFが読み込まれていません";
+            if (!pdfDocBytes) {
+                statusInfo.textContent = "PDFが読み込まれていません";
                 return;
             }
 
@@ -743,55 +743,56 @@
             statusInfo.textContent = "PDFを出力中...";
 
             try {
-                // 現在ページのFabricオブジェクトを保存
+                /*
+                 * スマホ互換性を最優先したPDF出力方式です。
+                 *
+                 * これまでの方式：
+                 * Fabric.js → pdf-lib drawText → fontkit
+                 *
+                 * では、スマホブラウザ上で日本語フォントの埋め込み等が
+                 * 原因となって文字が表示されない可能性があります。
+                 *
+                 * 今回は、
+                 * Fabric上の文字情報
+                 *       ↓
+                 * ブラウザのCanvasへ描画
+                 *       ↓
+                 * PNGとしてPDFへ貼り付け
+                 *
+                 * とします。
+                 *
+                 * この方式なら、日本語・英数字・✓・〇を
+                 * 「見た目どおり」にPDFへ出力できます。
+                 */
+
+                // 現在ページのオブジェクトを保存
                 pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => ({
                     type: obj.type,
                     text: obj.text || '',
-                    left: obj.left,
-                    top: obj.top,
+                    left: obj.left || 0,
+                    top: obj.top || 0,
                     fontSize: obj.fontSize || 16,
                     scaleX: obj.scaleX || 1,
                     scaleY: obj.scaleY || 1,
                     originX: obj.originX || 'left',
                     originY: obj.originY || 'top',
-                    angle: obj.angle || 0
+                    angle: obj.angle || 0,
+                    fontFamily: obj.fontFamily || customFontName,
+                    fill: obj.fill || '#000000'
                 }));
 
-                const { PDFDocument, rgb, degrees } = window.PDFLib;
+                const { PDFDocument } = window.PDFLib;
                 const pdfDoc = await PDFDocument.load(pdfDocBytes.slice(0));
-
-                // 日本語フォントをPDFへ埋め込む
-                pdfDoc.registerFontkit(window.fontkit);
-
-                // TTF/TTCを判定
-                const isCollection =
-                    fontFileBytes.length >= 4 &&
-                    fontFileBytes[0] === 0x74 &&
-                    fontFileBytes[1] === 0x74 &&
-                    fontFileBytes[2] === 0x63 &&
-                    fontFileBytes[3] === 0x66;
-
-                const jpFont = await pdfDoc.embedFont(
-                    fontFileBytes,
-                    isCollection ? { subset: false, index: 0 } : { subset: false }
-                );
 
                 const pages = pdfDoc.getPages();
 
-                /*
-                 * 重要：
-                 * Fabric CanvasにはrenderMultiplierのズームが設定されていますが、
-                 * Fabricオブジェクトのleft/top/fontSizeはCanvas座標系で取得できます。
-                 * そのためPDF化では「currentScaleだけ」を使ってPDF座標へ戻します。
-                 *
-                 * PDFの1pt = Fabric上の1CSSpx / currentScale として変換します。
-                 */
-
+                // 現在表示しているページだけでなく、
+                // 保存済みページも順番に処理します。
                 for (const pageNumStr in pageSavedObjects) {
                     const pageNum = parseInt(pageNumStr, 10);
-                    const pageObjects = pageSavedObjects[pageNum];
+                    const objects = pageSavedObjects[pageNum];
 
-                    if (!pageObjects || pageObjects.length === 0) continue;
+                    if (!objects || objects.length === 0) continue;
 
                     const targetPage = pages[pageNum - 1];
                     if (!targetPage) continue;
@@ -799,80 +800,155 @@
                     const { width: pageWidth, height: pageHeight } =
                         targetPage.getSize();
 
-                    for (const obj of pageObjects) {
+                    /*
+                     * PDF表示時と同じCSS座標系で透明Canvasを作成。
+                     *
+                     * currentScale:
+                     * PDFポイント → 画面CSS px
+                     *
+                     * したがって、
+                     * Canvas幅 = PDF幅 × currentScale
+                     */
+                    let pageScale = currentScale;
+
+                    // 現在ページ以外についても、PDFの縦横比から
+                    // 表示用Canvasサイズを計算する。
+                    const canvasWidth = Math.max(
+                        1,
+                        Math.round(pageWidth * pageScale)
+                    );
+                    const canvasHeight = Math.max(
+                        1,
+                        Math.round(pageHeight * pageScale)
+                    );
+
+                    const overlayCanvas = document.createElement('canvas');
+                    overlayCanvas.width = canvasWidth;
+                    overlayCanvas.height = canvasHeight;
+
+                    const ctx = overlayCanvas.getContext('2d');
+
+                    // 背景は透明のまま
+                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+                    // フォント読み込み完了を待つ
+                    if (document.fonts && document.fonts.ready) {
+                        await document.fonts.ready;
+                    }
+
+                    for (const obj of objects) {
                         if (!obj.text || obj.text.trim() === '') continue;
 
-                        // Fabric座標 → PDFポイント
-                        const x = (obj.left || 0) / currentScale;
+                        const fs = Math.max(
+                            1,
+                            (obj.fontSize || 16) * (obj.scaleY || 1)
+                        );
 
-                        /*
-                         * FabricのfontSizeはCanvas上のCSS px。
-                         * scaleYを反映させた後、PDFポイントへ変換。
-                         */
-                        const fontSize =
-                            ((obj.fontSize || 16) * (obj.scaleY || 1))
-                            / currentScale;
+                        const sx = obj.scaleX || 1;
 
-                        let y;
+                        ctx.save();
 
-                        if (obj.originY === 'center') {
-                            // 中央基準のスタンプ（✓、〇など）
-                            y = pageHeight
-                                - ((obj.top || 0) / currentScale)
-                                - (fontSize * 0.35);
-                        } else {
-                            // 通常の左上基準テキスト
-                            y = pageHeight
-                                - ((obj.top || 0) / currentScale)
-                                - fontSize;
-                        }
+                        // Fabricと同じ座標系へ
+                        const x = (obj.left || 0);
+                        const y = (obj.top || 0);
 
-                        // 文字がPDFページ外へ完全に出ないよう最低限補正
-                        const safeFontSize = Math.max(1, fontSize);
-                        const safeX = Math.max(0, Math.min(x, pageWidth));
-                        const safeY = Math.max(0, Math.min(y, pageHeight));
-
-                        const drawOptions = {
-                            x: safeX,
-                            y: safeY,
-                            size: safeFontSize,
-                            font: jpFont,
-                            color: rgb(0, 0, 0),
-                            opacity: 1
-                        };
-
-                        // 回転文字にも対応
+                        // 回転
                         if (obj.angle) {
-                            drawOptions.rotate = degrees(obj.angle);
+                            // 回転中心を概算
+                            ctx.translate(x, y);
+                            ctx.rotate((obj.angle * Math.PI) / 180);
+                            ctx.translate(-x, -y);
                         }
 
-                        targetPage.drawText(obj.text, drawOptions);
+                        ctx.font = `${fs}px ${obj.fontFamily || customFontName}`;
+                        ctx.fillStyle = obj.fill || '#000000';
+                        ctx.textBaseline = 'top';
+
+                        if (obj.originX === 'center' || obj.originY === 'center') {
+                            const measuredWidth =
+                                ctx.measureText(obj.text).width * sx;
+
+                            let drawX = x;
+                            let drawY = y;
+
+                            if (obj.originX === 'center') {
+                                drawX = x - measuredWidth / 2;
+                            }
+
+                            if (obj.originY === 'center') {
+                                drawY = y - fs / 2;
+                            }
+
+                            ctx.save();
+                            ctx.translate(drawX, drawY);
+
+                            if (sx !== 1) {
+                                ctx.scale(sx, 1);
+                            }
+
+                            ctx.fillText(obj.text, 0, 0);
+                            ctx.restore();
+
+                        } else {
+                            ctx.save();
+                            ctx.translate(x, y);
+
+                            if (sx !== 1) {
+                                ctx.scale(sx, 1);
+                            }
+
+                            ctx.fillText(obj.text, 0, 0);
+                            ctx.restore();
+                        }
+
+                        ctx.restore();
                     }
+
+                    /*
+                     * 透明PNGとしてPDFへ貼り付ける。
+                     * PDFページ全体と同じサイズなので、
+                     * 座標変換によるズレを最小化できます。
+                     */
+                    const pngDataUrl = overlayCanvas.toDataURL(
+                        'image/png',
+                        1.0
+                    );
+
+                    const pngImage = await pdfDoc.embedPng(pngDataUrl);
+
+                    targetPage.drawImage(pngImage, {
+                        x: 0,
+                        y: 0,
+                        width: pageWidth,
+                        height: pageHeight,
+                        opacity: 1
+                    });
                 }
 
                 const modifiedPdfBytes = await pdfDoc.save();
 
-                // スマホでも動作しやすいBlobダウンロード
                 const blob = new Blob(
                     [modifiedPdfBytes],
-                    { type: "application/pdf" }
+                    { type: 'application/pdf' }
                 );
 
                 const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
 
+                const link = document.createElement('a');
                 link.href = url;
-                link.download = "edited_document.pdf";
-                link.style.display = "none";
+                link.download = 'edited_document.pdf';
+                link.style.display = 'none';
 
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
 
-                // Object URLをすぐには消さない
-                setTimeout(() => URL.revokeObjectURL(url), 3000);
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 5000);
 
-                statusInfo.textContent = "PDF書き出し完了！";
+                statusInfo.textContent =
+                    "PDF書き出し完了！文字を画像としてPDFに反映しました。";
 
             } catch (error) {
                 console.error("PDF書き出しエラー:", error);
