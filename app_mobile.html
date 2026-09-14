@@ -305,7 +305,6 @@
     let totalPageCount = 0;
     let pageSavedObjects = {};
     
-    // 動的に計算するレンダリングスケール（初期値は仮）
     let currentScale = 1.5;
     let originalPdfWidth = 0;
     let originalPdfHeight = 0;
@@ -344,11 +343,11 @@
             modeCircleBtn.classList.toggle('active', mode === 'circle');
 
             if (mode === 'text') {
-                statusInfo.textContent = "タップした場所に文字を入力できます";
+                statusInfo.textContent = "ダブルタップした場所に文字を入力できます";
             } else if (mode === 'check') {
-                statusInfo.textContent = "タップした場所に「✓」を配置します";
+                statusInfo.textContent = "ダブルタップした場所に「✓」を配置します";
             } else if (mode === 'circle') {
-                statusInfo.textContent = "タップした場所に「〇」を配置します";
+                statusInfo.textContent = "ダブルタップした場所に「〇」を配置します";
             }
         }
 
@@ -446,7 +445,7 @@
                 await renderPage(currentPageNum);
                 
                 exportPdfBtn.disabled = false;
-                statusInfo.textContent = "文字やスタンプを配置できます";
+                statusInfo.textContent = "ダブルタップで文字やスタンプを配置できます";
             } catch (error) {
                 console.error(error);
                 statusInfo.textContent = "PDFの読み込みに失敗しました";
@@ -461,15 +460,13 @@
             if (!pdfDocJS) return;
             const pdfPage = await pdfDocJS.getPage(pageNum);
             
-            // 標準スケール（1.0）での元サイズを取得
             const unscaledViewport = pdfPage.getViewport({ scale: 1.0 });
             originalPdfWidth = unscaledViewport.width;
             originalPdfHeight = unscaledViewport.height;
 
-            // スマホの画面幅（ワークスペース幅）に合わせて自動フィットするスケールを計算（左右に少しマージンを確保）
             const availableWidth = workspace.clientWidth - 32;
             currentScale = availableWidth / originalPdfWidth;
-            if (currentScale > 2.0) currentScale = 2.0; // 大きくなりすぎないように上限
+            if (currentScale > 2.0) currentScale = 2.0;
 
             const viewport = pdfPage.getViewport({ scale: currentScale });
             
@@ -481,16 +478,16 @@
             fCanvas.setWidth(viewport.width);
             fCanvas.setHeight(viewport.height);
 
-            // ラッパーのサイズを明示的に指定してはみ出しや崩れを防ぐ
             canvasWrapper.style.width = viewport.width + 'px';
             canvasWrapper.style.height = viewport.height + 'px';
 
             await pdfPage.render({ canvasContext: bgCtx, viewport: viewport }).promise;
         }
 
-        fCanvas.on('mouse:down', (options) => {
+        // ダブルタップ（またはダブルクリック）で文字・スタンプを配置
+        fCanvas.on('mouse:dblclick', (options) => {
             if (!pdfDocBytes) return;
-            if (options.target) return;
+            if (options.target) return; // 既存のオブジェクト上なら無視
 
             const pointer = fCanvas.getPointer(options.e);
 
