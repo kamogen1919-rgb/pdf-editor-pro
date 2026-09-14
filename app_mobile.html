@@ -31,25 +31,33 @@
             color: var(--text-color);
         }
 
-        /* アプリ全体レイアウト：スマホ画面一杯に配置 */
+        /* アプリ全体レイアウト：スマホ画面一杯に配置し上下に要素を並べる */
         .mobile-app-container {
             position: relative;
             width: 100vw;
             height: 100vh;
+            height: 100dvh; /* ユーティリティ: モバイルブラウザのアドレスバー考慮 */
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            box-sizing: border-box;
         }
 
-        /* 上部ツールバー（文字、レ点、〇） */
+        /* 上部ツールバーエリア（文字、レ点、〇、削除ボタンをまとめる） */
+        .top-container {
+            flex-shrink: 0;
+            padding: 12px 12px 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background-color: var(--bg-color);
+            z-index: 1000;
+        }
+
         .top-toolbar {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            right: 12px;
             display: flex;
             gap: 8px;
-            z-index: 1000;
+            width: 100%;
             box-sizing: border-box;
         }
 
@@ -57,13 +65,13 @@
             flex: 1;
             background-color: #ffffff;
             border: 2px solid var(--border-color);
-            padding: 12px 0;
+            padding: 10px 0;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 700;
             color: var(--text-color);
             text-align: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             cursor: pointer;
             user-select: none;
             transition: all 0.1s ease;
@@ -75,27 +83,12 @@
             color: var(--primary-color);
         }
 
-        .tool-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* 削除ボタンエリア */
-        .delete-toolbar {
-            position: absolute;
-            top: 70px;
-            left: 12px;
-            right: 12px;
-            z-index: 1000;
-            box-sizing: border-box;
-        }
-
         .delete-btn {
             width: 100%;
             background-color: #fda4af;
             color: #ffffff;
             border: none;
-            padding: 10px 0;
+            padding: 8px 0;
             border-radius: 8px;
             font-size: 0.95rem;
             font-weight: 700;
@@ -113,7 +106,6 @@
             flex: 1;
             position: relative;
             width: 100%;
-            height: 100%;
             overflow: auto;
             -webkit-overflow-scrolling: touch;
             background-color: var(--bg-color);
@@ -126,7 +118,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 130px 20px 140px 20px; /* 上下のボタンと被らないように余白を確保 */
+            padding: 20px;
             box-sizing: border-box;
         }
 
@@ -150,16 +142,17 @@
             z-index: 2;
         }
 
-        /* 下部ボタン（PDF読み込み / 書き出し ＋ 文字情報保存・読み込み） */
+        /* 下部アクションバー（常に画面下部に収まるように配置） */
         .bottom-toolbar {
-            position: absolute;
-            bottom: 24px;
-            left: 20px;
-            right: 20px;
+            flex-shrink: 0;
+            padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px)) 12px;
+            background-color: var(--bg-color);
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
+            box-sizing: border-box;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
         }
 
         .bottom-sub-row {
@@ -177,7 +170,7 @@
             font-size: 0.85rem;
             font-weight: 700;
             text-align: center;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             cursor: pointer;
         }
 
@@ -186,12 +179,12 @@
             background-color: var(--success-color);
             color: white;
             border: none;
-            padding: 14px;
+            padding: 12px;
             border-radius: 10px;
             font-size: 1rem;
             font-weight: 700;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
             cursor: pointer;
         }
 
@@ -239,15 +232,13 @@
 <body>
 
     <div class="mobile-app-container">
-        <!-- 上部ツールバー -->
-        <div class="top-toolbar">
-            <button id="modeTextBtn" class="tool-btn active">文字</button>
-            <button id="modeCheckBtn" class="tool-btn">レ点</button>
-            <button id="modeCircleBtn" class="tool-btn">〇</button>
-        </div>
-
-        <!-- 削除ボタンエリア -->
-        <div class="delete-toolbar">
+        <!-- 上部コントロールエリア -->
+        <div class="top-container">
+            <div class="top-toolbar">
+                <button id="modeTextBtn" class="tool-btn active">文字</button>
+                <button id="modeCheckBtn" class="tool-btn">レ点</button>
+                <button id="modeCircleBtn" class="tool-btn">〇</button>
+            </div>
             <button id="deleteBtn" class="delete-btn">削除</button>
         </div>
 
@@ -298,9 +289,8 @@
     let currentPageNum = 1;
     let totalPageCount = 0;
     let pageSavedObjects = {};
-    const scale = 1.5; // レンダリング解像度
+    const scale = 1.5;
 
-    // 現在の入力モード: 'text', 'check', 'circle'
     let currentMode = 'text';
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -318,16 +308,13 @@
         const modeCheckBtn = document.getElementById('modeCheckBtn');
         const modeCircleBtn = document.getElementById('modeCircleBtn');
 
-        // Fabric.jsの初期化
         const fCanvas = new fabric.Canvas('fabricCanvas', {
             allowTouchScrolling: true,
             selection: true
         });
 
-        // 初期フォントの自動読込
         await loadDefaultFont();
 
-        // モード切替ボタンの制御
         function setMode(mode) {
             currentMode = mode;
             modeTextBtn.classList.toggle('active', mode === 'text');
@@ -347,7 +334,6 @@
         modeCheckBtn.addEventListener('click', () => setMode('check'));
         modeCircleBtn.addEventListener('click', () => setMode('circle'));
 
-        // 削除ボタンの処理（選択中のオブジェクトを削除）
         deleteBtn.addEventListener('click', () => {
             const activeObjects = fCanvas.getActiveObjects();
             if (activeObjects.length > 0) {
@@ -360,7 +346,6 @@
             }
         });
 
-        // 文字情報保存（JSONダウンロード）
         saveJsonBtn.addEventListener('click', () => {
             if (!pdfDocBytes) {
                 statusInfo.textContent = "PDFが読み込まれていません";
@@ -377,7 +362,6 @@
             statusInfo.textContent = "文字情報を保存しました";
         });
 
-        // 文字情報読み込みボタン
         loadJsonBtn.addEventListener('click', () => {
             if (!pdfDocBytes) {
                 statusInfo.textContent = "先にPDFを読み込んでください";
@@ -386,7 +370,6 @@
             jsonInput.click();
         });
 
-        // JSONファイル選択時
         jsonInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -413,7 +396,6 @@
             }
         });
 
-        // 下部ボタンのアクション（未読込時は「PDF読み込み」、読込済みなら「PDF書き出し」）
         mainActionBtn.addEventListener('click', () => {
             if (!pdfDocBytes) {
                 fileInput.click();
@@ -422,7 +404,6 @@
             }
         });
 
-        // ファイル選択時（PDF読み込み）
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -439,7 +420,7 @@
 
                 await renderPage(currentPageNum);
                 
-                mainActionBtn.textContent = "PDF 読み込み（書き出し）";
+                mainActionBtn.textContent = "🚀 PDF書き出し";
                 statusInfo.textContent = "文字やスタンプを配置できます";
             } catch (error) {
                 console.error(error);
@@ -461,7 +442,6 @@
             await pdfPage.render({ canvasContext: bgCtx, viewport: viewport }).promise;
         }
 
-        // キャンバスタップ時の処理
         fCanvas.on('mouse:down', (options) => {
             if (!pdfDocBytes) return;
             if (options.target) return;
@@ -488,8 +468,8 @@
             }
         });
 
-        function createTextAndEdit(initialText, x, y) {
-            const text = new fabric.IText(initialText, {
+        function createTextAndEdit(initialTest, x, y) {
+            const text = new fabric.IText(initialTest, {
                 left: x,
                 top: y,
                 fontSize: 20,
@@ -513,7 +493,6 @@
             fCanvas.renderAll();
         }
 
-        // PDF書き出し処理
         async function exportPDF() {
             if (!pdfDocBytes || !fontFileBytes) return;
 
