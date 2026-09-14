@@ -13,6 +13,7 @@
         :root {
             --primary-color: #2563eb;
             --success-color: #10b981;
+            --export-color: #0284c7;
             --danger-color: #f43f5e;
             --bg-color: #64748b;
             --panel-bg: #ffffff;
@@ -31,19 +32,19 @@
             color: var(--text-color);
         }
 
-        /* アプリ全体レイアウト：スマホ画面一杯に配置し上下に要素を並べる */
+        /* アプリ全体レイアウト */
         .mobile-app-container {
             position: relative;
             width: 100vw;
             height: 100vh;
-            height: 100dvh; /* ユーティリティ: モバイルブラウザのアドレスバー考慮 */
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             box-sizing: border-box;
         }
 
-        /* 上部ツールバーエリア（文字、レ点、〇、削除ボタンをまとめる） */
+        /* 上部コントロールエリア */
         .top-container {
             flex-shrink: 0;
             padding: 12px 12px 8px 12px;
@@ -101,7 +102,7 @@
             background-color: var(--danger-color);
         }
 
-        /* ズーム・パン操作を受け持つワークスペース（背景PDF＋編集キャンバス） */
+        /* ワークスペース */
         .workspace {
             flex: 1;
             position: relative;
@@ -118,7 +119,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 16px;
             box-sizing: border-box;
         }
 
@@ -135,6 +136,7 @@
             top: 0;
             left: 0;
             z-index: 1;
+            display: block;
         }
 
         .canvas-container {
@@ -142,7 +144,7 @@
             z-index: 2;
         }
 
-        /* 下部アクションバー（常に画面下部に収まるように配置） */
+        /* 下部アクションバー */
         .bottom-toolbar {
             flex-shrink: 0;
             padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px)) 12px;
@@ -174,18 +176,28 @@
             cursor: pointer;
         }
 
+        .action-row {
+            display: flex;
+            gap: 8px;
+        }
+
         .action-btn {
-            width: 100%;
+            flex: 1;
             background-color: var(--success-color);
             color: white;
             border: none;
-            padding: 12px;
+            padding: 12px 0;
             border-radius: 10px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 700;
             text-align: center;
             box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
             cursor: pointer;
+        }
+
+        .action-btn.export {
+            background-color: var(--export-color);
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
         }
 
         .action-btn:disabled {
@@ -245,7 +257,7 @@
         <!-- ワークスペース（PDF背景 ＋ Fabric.js） -->
         <div class="workspace" id="workspace">
             <div class="workspace-inner" id="workspaceInner">
-                <div class="canvas-container-wrapper" id="canvasWrapper">
+                <div class="canvas-container-wrapper" id="canvasWrapper" style="width: 100px; height: 100px;">
                     <canvas id="bgCanvas"></canvas>
                     <canvas id="fabricCanvas"></canvas>
                 </div>
@@ -258,8 +270,11 @@
                 <button id="saveJsonBtn" class="sub-action-btn">文字情報保存</button>
                 <button id="loadJsonBtn" class="sub-action-btn">文字情報読み込み</button>
             </div>
-            <button id="mainActionBtn" class="action-btn">PDF 読み込み</button>
-            <div id="statusInfo" class="sub-info">ファイルを選択してください</div>
+            <div class="action-row">
+                <button id="loadPdfBtn" class="action-btn">PDF読み込み</button>
+                <button id="exportPdfBtn" class="action-btn export" disabled>PDF書き出し</button>
+            </div>
+            <div id="statusInfo" class="sub-info">PDFファイルを選択してください</div>
         </div>
     </div>
 
@@ -289,18 +304,25 @@
     let currentPageNum = 1;
     let totalPageCount = 0;
     let pageSavedObjects = {};
-    const scale = 1.5;
+    
+    // 動的に計算するレンダリングスケール（初期値は仮）
+    let currentScale = 1.5;
+    let originalPdfWidth = 0;
+    let originalPdfHeight = 0;
 
     let currentMode = 'text';
 
     window.addEventListener('DOMContentLoaded', async () => {
         const fileInput = document.getElementById('fileInput');
         const jsonInput = document.getElementById('jsonInput');
-        const mainActionBtn = document.getElementById('mainActionBtn');
+        const loadPdfBtn = document.getElementById('loadPdfBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
         const deleteBtn = document.getElementById('deleteBtn');
         const saveJsonBtn = document.getElementById('saveJsonBtn');
         const loadJsonBtn = document.getElementById('loadJsonBtn');
         const statusInfo = document.getElementById('statusInfo');
+        const workspace = document.getElementById('workspace');
+        const canvasWrapper = document.getElementById('canvasWrapper');
         const bgCanvas = document.getElementById('bgCanvas');
         const bgCtx = bgCanvas.getContext('2d');
 
@@ -396,10 +418,12 @@
             }
         });
 
-        mainActionBtn.addEventListener('click', () => {
-            if (!pdfDocBytes) {
-                fileInput.click();
-            } else {
+        loadPdfBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        exportPdfBtn.addEventListener('click', () => {
+            if (pdfDocBytes) {
                 exportPDF();
             }
         });
@@ -411,6 +435,7 @@
             statusInfo.textContent = "PDFを読み込み中...";
             fCanvas.clear();
             currentPageNum = 1;
+            pageSavedObjects = {};
 
             try {
                 const arrayBuffer = await file.arrayBuffer();
@@ -420,24 +445,45 @@
 
                 await renderPage(currentPageNum);
                 
-                mainActionBtn.textContent = "🚀 PDF書き出し";
+                exportPdfBtn.disabled = false;
                 statusInfo.textContent = "文字やスタンプを配置できます";
             } catch (error) {
                 console.error(error);
                 statusInfo.textContent = "PDFの読み込みに失敗しました";
                 pdfDocBytes = null;
+                exportPdfBtn.disabled = true;
+            } finally {
+                fileInput.value = '';
             }
         });
 
         async function renderPage(pageNum) {
             if (!pdfDocJS) return;
             const pdfPage = await pdfDocJS.getPage(pageNum);
-            const viewport = pdfPage.getViewport({ scale: scale });
+            
+            // 標準スケール（1.0）での元サイズを取得
+            const unscaledViewport = pdfPage.getViewport({ scale: 1.0 });
+            originalPdfWidth = unscaledViewport.width;
+            originalPdfHeight = unscaledViewport.height;
+
+            // スマホの画面幅（ワークスペース幅）に合わせて自動フィットするスケールを計算（左右に少しマージンを確保）
+            const availableWidth = workspace.clientWidth - 32;
+            currentScale = availableWidth / originalPdfWidth;
+            if (currentScale > 2.0) currentScale = 2.0; // 大きくなりすぎないように上限
+
+            const viewport = pdfPage.getViewport({ scale: currentScale });
             
             bgCanvas.width = viewport.width;
             bgCanvas.height = viewport.height;
+            bgCanvas.style.width = viewport.width + 'px';
+            bgCanvas.style.height = viewport.height + 'px';
+
             fCanvas.setWidth(viewport.width);
             fCanvas.setHeight(viewport.height);
+
+            // ラッパーのサイズを明示的に指定してはみ出しや崩れを防ぐ
+            canvasWrapper.style.width = viewport.width + 'px';
+            canvasWrapper.style.height = viewport.height + 'px';
 
             await pdfPage.render({ canvasContext: bgCtx, viewport: viewport }).promise;
         }
@@ -455,7 +501,7 @@
                 const stampText = new fabric.IText(symbol, {
                     left: pointer.x,
                     top: pointer.y,
-                    fontSize: 24,
+                    fontSize: Math.round(24 * (currentScale / 1.5)),
                     fontFamily: customFontName,
                     fill: '#000000',
                     originX: 'center',
@@ -472,7 +518,7 @@
             const text = new fabric.IText(initialTest, {
                 left: x,
                 top: y,
-                fontSize: 20,
+                fontSize: Math.round(20 * (currentScale / 1.5)),
                 fontFamily: customFontName,
                 fill: '#000000',
                 editingBorderColor: '#2563eb',
@@ -496,7 +542,7 @@
         async function exportPDF() {
             if (!pdfDocBytes || !fontFileBytes) return;
 
-            mainActionBtn.disabled = true;
+            exportPdfBtn.disabled = true;
             statusInfo.textContent = "PDFを出力中...";
 
             try {
@@ -521,16 +567,16 @@
                             let pdfX, pdfY;
 
                             if ((obj.text === '✓' || obj.text === '〇') && obj.originX === 'center' && obj.originY === 'center') {
-                                const approxWidth = (obj.fontSize / scale);
-                                pdfX = (obj.left / scale) - (approxWidth / 2);
-                                pdfY = height - (obj.top / scale) - (actualFontSize / scale / 2);
+                                const approxWidth = (obj.fontSize / currentScale);
+                                pdfX = (obj.left / currentScale) - (approxWidth / 2);
+                                pdfY = height - (obj.top / currentScale) - (actualFontSize / currentScale / 2);
                             } else {
-                                pdfX = obj.left / scale;
-                                pdfY = height - (obj.top / scale) - (actualFontSize / scale);
+                                pdfX = obj.left / currentScale;
+                                pdfY = height - (obj.top / currentScale) - (actualFontSize / currentScale);
                             }
 
                             firstPage.drawText(obj.text, {
-                                x: pdfX, y: pdfY, size: obj.fontSize / scale, font: jpFont,
+                                x: pdfX, y: pdfY, size: obj.fontSize / currentScale, font: jpFont,
                                 color: PDFLib.rgb(0, 0, 0)
                             });
                         }
@@ -550,7 +596,7 @@
                 console.error(error);
                 statusInfo.textContent = "出力エラーが発生しました";
             } finally {
-                mainActionBtn.disabled = false;
+                exportPdfBtn.disabled = false;
             }
         }
 
