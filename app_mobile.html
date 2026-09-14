@@ -655,8 +655,8 @@
                 fontFamily: customFontName,
                 fill: '#000000',
                 editingBorderColor: '#2563eb',
-                lockUniScaling: true,
-                uniformScaling: true
+                lockUniScaling: true, // ← 縦横比を固定する設定
+                uniformScaling: true  // ← 均等に拡大縮小させる設定
             });
 
             text.on('editing:exited', () => {
