@@ -103,7 +103,7 @@
             background-color: var(--danger-color);
         }
 
-        /* ワークスペース（ピンチズーム・スクロールを完全に許可） */
+        /* ワークスペース（ピンチズーム・スクロール対応） */
         .workspace {
             flex: 1;
             position: relative;
@@ -141,11 +141,18 @@
             left: 0;
             z-index: 1;
             display: block;
+            touch-action: pinch-zoom pan-x pan-y !important;
         }
 
+        /* Fabric.jsが自動生成するコンテナおよびキャンバス要素にもピンチズームを強制適用 */
         .canvas-container {
             position: relative;
             z-index: 2;
+            touch-action: pinch-zoom pan-x pan-y !important;
+        }
+
+        .canvas-container canvas {
+            touch-action: pinch-zoom pan-x pan-y !important;
         }
 
         /* 下部アクションバー */
