@@ -728,6 +728,7 @@
             statusInfo.textContent = "PDFを出力中...";
 
             try {
+                // 現在のページのオブジェクトを保存
                 pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => obj.toObject());
 
                 const { PDFDocument } = window.PDFLib;
@@ -739,26 +740,37 @@
 
                 const pages = pdfDoc.getPages();
                 const firstPage = pages[currentPageNum - 1];
-                const { height } = firstPage.getSize();
+                const { height } = firstPage.getSize(); // PDFの元の高さ（ポイント単位）
                 const pageObjects = pageSavedObjects[currentPageNum];
 
                 if (pageObjects) {
                     for (const obj of pageObjects) {
-                        if (obj.type === 'i-text') {
-                            const actualFontSize = (obj.fontSize * (obj.scaleY || 1));
+                        if (obj.type === 'i-text' && obj.text && obj.text.trim() !== '') {
+                            // Fabric.js上の座標・サイズを、PDFのオリジナル座標系に逆算して正確に戻す
+                            // currentScale は (表示幅 / PDFの元幅) なので、画面上のピクセルを currentScale で割ればPDF上のポイントに戻ります
+                            const pdfFontSize = obj.fontSize / currentScale;
+                            const actualFontSize = pdfFontSize * (obj.scaleY || 1);
+                            
                             let pdfX, pdfY;
 
-                            if ((obj.text === '✓' || obj.text === '〇') && obj.originX === 'center' && obj.originY === 'center') {
-                                const approxWidth = (obj.fontSize / currentScale);
+                            if ((obj.text === '✓' /* レ点や〇の場合 */ || obj.text === '✓' || obj.text === '〇') && obj.originX === 'center' && obj.originY === 'center') {
+                                // 中央基準のスタンプの場合の補正
+                                const approxWidth = pdfFontSize * (obj.scaleX || 1);
                                 pdfX = (obj.left / currentScale) - (approxWidth / 2);
-                                pdfY = height - (obj.top / currentScale) - (actualFontSize / currentScale / 2);
+                                // PDF-Libは左下原点のため、Y軸を反転させる
+                                pdfY = height - (obj.top / currentScale) - (actualFontSize / 2);
                             } else {
+                                // 通常の文字入力の場合の補正 (左上基準)
                                 pdfX = obj.left / currentScale;
-                                pdfY = height - (obj.top / currentScale) - (actualFontSize / currentScale);
+                                // Fabricのトップ位置からフォントの高さを考慮してPDFのベースラインに合わせる
+                                pdfY = height - (obj.top / currentScale) - actualFontSize;
                             }
 
                             firstPage.drawText(obj.text, {
-                                x: pdfX, y: pdfY, size: obj.fontSize / currentScale, font: jpFont,
+                                x: pdfX,
+                                y: pdfY,
+                                size: actualFontSize,
+                                font: jpFont,
                                 color: PDFLib.rgb(0, 0, 0)
                             });
                         }
