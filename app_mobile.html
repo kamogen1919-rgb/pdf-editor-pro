@@ -127,9 +127,8 @@
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            /* ↓ 中央寄せを解除し、JSの座標計算を優先させる */
+            display: block; 
             touch-action: none;
         }
 
@@ -467,14 +466,20 @@
 
         function resetZoomAndPan() {
             zoomScale = 1;
-            const workspaceW = workspace.clientWidth;
-            const workspaceH = workspace.clientHeight;
-            const wrapperW = canvasWrapper.offsetWidth;
-            const wrapperH = canvasWrapper.offsetHeight;
             
-            panX = (workspaceW - wrapperW) / 2;
-            panY = (workspaceH - wrapperH) / 2;
-            updateCanvasTransform();
+            // 少し遅延させることで、ブラウザのレイアウト確定を確実に待つ
+            requestAnimationFrame(() => {
+                const workspaceW = workspace.clientWidth;
+                const workspaceH = workspace.clientHeight;
+                const wrapperW = canvasWrapper.offsetWidth;
+                const wrapperH = canvasWrapper.offsetHeight;
+                
+                // 画面中央に配置するための計算（マイナスにならないようMath.maxを使用）
+                panX = Math.max(0, (workspaceW - wrapperW) / 2);
+                panY = Math.max(0, (workspaceH - wrapperH) / 2);
+                
+                updateCanvasTransform();
+            });
         }
 
         deleteBtn.addEventListener('click', () => {
