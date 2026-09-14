@@ -30,7 +30,6 @@
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            touch-action: pan-x pan-y pinch-zoom;
         }
 
         /* アプリ全体レイアウト */
@@ -58,7 +57,7 @@
 
         .top-toolbar {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             width: 100%;
             box-sizing: border-box;
         }
@@ -67,9 +66,9 @@
             flex: 1;
             background-color: #ffffff;
             border: 2px solid var(--border-color);
-            padding: 10px 0;
+            padding: 8px 0;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 700;
             color: var(--text-color);
             text-align: center;
@@ -85,6 +84,18 @@
             color: var(--primary-color);
         }
 
+        /* モード切り替えボタン用の特別色 */
+        .tool-btn.mode-zoom {
+            background-color: #fef08a;
+            border-color: #eab308;
+            color: #854d0e;
+        }
+        .tool-btn.mode-zoom.active {
+            background-color: #fde047;
+            border-color: #ca8a04;
+            color: #713f12;
+        }
+
         .delete-btn {
             width: 100%;
             background-color: #fda4af;
@@ -92,7 +103,7 @@
             border: none;
             padding: 8px 0;
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: 0.90rem;
             font-weight: 700;
             text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -111,7 +122,7 @@
             overflow: auto;
             -webkit-overflow-scrolling: touch;
             background-color: var(--bg-color);
-            touch-action: pinch-zoom pan-x pan-y;
+            touch-action: pan-x pan-y pinch-zoom;
         }
 
         .workspace-inner {
@@ -123,7 +134,7 @@
             align-items: center;
             padding: 40px;
             box-sizing: border-box;
-            touch-action: pinch-zoom pan-x pan-y;
+            touch-action: pan-x pan-y pinch-zoom;
         }
 
         .canvas-container-wrapper {
@@ -132,7 +143,7 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             border-radius: 4px;
             transform-origin: center center;
-            touch-action: pinch-zoom pan-x pan-y;
+            touch-action: pan-x pan-y pinch-zoom;
         }
 
         #bgCanvas {
@@ -141,18 +152,14 @@
             left: 0;
             z-index: 1;
             display: block;
-            touch-action: pinch-zoom pan-x pan-y !important;
+            touch-action: pan-x pan-y pinch-zoom;
         }
 
-        /* Fabric.jsが自動生成するコンテナおよびキャンバス要素にもピンチズームを強制適用 */
+        /* Fabricのコンテナ：ズームモード時はタッチを透過させる */
         .canvas-container {
             position: relative;
             z-index: 2;
-            touch-action: pinch-zoom pan-x pan-y !important;
-        }
-
-        .canvas-container canvas {
-            touch-action: pinch-zoom pan-x pan-y !important;
+            touch-action: pan-x pan-y pinch-zoom;
         }
 
         /* 下部アクションバー */
@@ -258,7 +265,8 @@
         <!-- 上部コントロールエリア -->
         <div class="top-container">
             <div class="top-toolbar">
-                <button id="modeTextBtn" class="tool-btn active">文字入力</button>
+                <button id="modeZoomBtn" class="tool-btn mode-zoom active">移動・ズーム</button>
+                <button id="modeTextBtn" class="tool-btn">文字入力</button>
                 <button id="modeCheckBtn" class="tool-btn">レ点</button>
                 <button id="modeCircleBtn" class="tool-btn">〇</button>
             </div>
@@ -285,7 +293,7 @@
                 <button id="loadPdfBtn" class="action-btn">PDF読み込み</button>
                 <button id="exportPdfBtn" class="action-btn export" disabled>PDF書き出し</button>
             </div>
-            <div id="statusInfo" class="sub-info">PDFファイルを選択してください</div>
+            <div id="statusInfo" class="sub-info">「移動・ズーム」モードでピンチイン・アウトが可能です</div>
         </div>
     </div>
 
@@ -320,7 +328,7 @@
     let originalPdfWidth = 0;
     let originalPdfHeight = 0;
 
-    let currentMode = 'text';
+    let currentMode = 'zoom'; // 初期値は「移動・ズーム」モード
 
     window.addEventListener('DOMContentLoaded', async () => {
         const fileInput = document.getElementById('fileInput');
@@ -336,6 +344,7 @@
         const bgCanvas = document.getElementById('bgCanvas');
         const bgCtx = bgCanvas.getContext('2d');
 
+        const modeZoomBtn = document.getElementById('modeZoomBtn');
         const modeTextBtn = document.getElementById('modeTextBtn');
         const modeCheckBtn = document.getElementById('modeCheckBtn');
         const modeCircleBtn = document.getElementById('modeCircleBtn');
@@ -344,26 +353,37 @@
             fireRightClick: true,
             stopContextMenu: true,
             selection: true,
-            enableRetinaScaling: true
+            interactive: false // 初期状態ではキャンバスのタッチを無効化（背景のズームを優先）
         });
 
         await loadDefaultFont();
 
         function setMode(mode) {
             currentMode = mode;
+            modeZoomBtn.classList.toggle('active', mode === 'zoom');
             modeTextBtn.classList.toggle('active', mode === 'text');
             modeCheckBtn.classList.toggle('active', mode === 'check');
             modeCircleBtn.classList.toggle('active', mode === 'circle');
 
-            if (mode === 'text') {
-                statusInfo.textContent = "タップした場所に文字を入力できます";
-            } else if (mode === 'check') {
-                statusInfo.textContent = "タップした場所に「✓」を配置します";
-            } else if (mode === 'circle') {
-                statusInfo.textContent = "タップした場所に「〇」を配置します";
+            if (mode === 'zoom') {
+                fCanvas.isDrawingMode = false;
+                fCanvas.selection = false;
+                fCanvas.upperCanvasEl.style.pointerEvents = 'none'; // タッチを背景（ワークスペース）にスルーさせる
+                statusInfo.textContent = "「移動・ズーム」：2本指で拡大縮小・スクロールができます";
+            } else {
+                fCanvas.upperCanvasEl.style.pointerEvents = 'auto'; // タッチをFabric.jsで受け取る
+                fCanvas.selection = true;
+                if (mode === 'text') {
+                    statusInfo.textContent = "「文字入力」：タップした場所に文字を入力します";
+                } else if (mode === 'check') {
+                    statusInfo.textContent = "「レ点」：タップした場所に「✓」を配置します";
+                } else if (mode === 'circle') {
+                    statusInfo.textContent = "「〇」：タップした場所に「〇」を配置します";
+                }
             }
         }
 
+        modeZoomBtn.addEventListener('click', () => setMode('zoom'));
         modeTextBtn.addEventListener('click', () => setMode('text'));
         modeCheckBtn.addEventListener('click', () => setMode('check'));
         modeCircleBtn.addEventListener('click', () => setMode('circle'));
@@ -458,7 +478,7 @@
                 await renderPage(currentPageNum);
                 
                 exportPdfBtn.disabled = false;
-                statusInfo.textContent = "タップで文字やスタンプを配置できます";
+                setMode('zoom'); // 読み込み後はズームモードをデフォルトにする
             } catch (error) {
                 console.error(error);
                 statusInfo.textContent = "PDFの読み込みに失敗しました";
@@ -497,9 +517,10 @@
             await pdfPage.render({ canvasContext: bgCtx, viewport: viewport }).promise;
         }
 
-        // タップ（クリック）時の処理：既存オブジェクトがない場合、新規作成
+        // タップ（クリック）時の処理：文字・スタンプ配置
         fCanvas.on('mouse:down', (options) => {
             if (!pdfDocBytes) return;
+            if (currentMode === 'zoom') return; // ズームモード時は無効
             if (options.target) return;
 
             const pointer = fCanvas.getPointer(options.e);
