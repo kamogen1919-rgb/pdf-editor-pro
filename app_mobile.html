@@ -370,12 +370,25 @@
             modeCircleBtn.classList.toggle('active', mode === 'circle');
 
             if (mode === 'zoom') {
+                // 移動ズームの時はオブジェクトの選択をオフにし、すべて非選択にする
                 fCanvas.selection = false;
                 fCanvas.discardActiveObject();
+                // すでに配置されている文字やスタンプを選択不可にする
+                fCanvas.forEachObject(obj => {
+                    obj.selectable = false;
+                    obj.evented = false;
+                });
                 fCanvas.renderAll();
                 statusInfo.textContent = "「移動・ズーム」：2本指で拡大縮小・1本指でスクロール";
             } else {
+                // 編集モードの時はオブジェクトを選択可能にする
                 fCanvas.selection = true;
+                fCanvas.forEachObject(obj => {
+                    obj.selectable = true;
+                    obj.evented = true;
+                });
+                fCanvas.renderAll();
+
                 if (mode === 'text') {
                     statusInfo.textContent = "「文字入力」：タップした場所に文字を入力します";
                 } else if (mode === 'check') {
