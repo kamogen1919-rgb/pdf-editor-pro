@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PDF文字入れ君 Mobile</title>
+    <!-- 外部ライブラリ (PC版と共通) -->
+    <script src="js/pdf.min.js"></script>
+    <script src="js/fabric.min.js"></script>
+    <script src="js/pdf-lib.min.js"></script>
+    <script src="js/fontkit.umd.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #10b981;
+            --danger-color: #f43f5e;
+            --bg-color: #64748b;
+            --panel-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-color: #1e293b;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* アプリ全体レイアウト：スマホ画面一杯に配置 */
+        .mobile-app-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 上部ツールバー（文字、レ点、〇） */
+        .top-toolbar {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        .tool-btn {
+            flex: 1;
+            background-color: #ffffff;
+            border: 2px solid var(--border-color);
+            padding: 12px 0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-color);
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s ease;
+        }
+
+        .tool-btn.active {
+            background-color: #e0f2fe;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tool-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 削除ボタンエリア */
+        .delete-toolbar {
+            position: absolute;
+            top: 70px;
+            left: 12px;
+            right: 12px;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        .delete-btn {
+            width: 100%;
+            background-color: #fda4af;
+            color: #ffffff;
+            border: none;
+            padding: 10px 0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .delete-btn:active {
+            background-color: var(--danger-color);
+        }
+
+        /* ズーム・パン操作を受け持つワークスペース（背景PDF＋編集キャンバス） */
+        .workspace {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            background-color: var(--bg-color);
+        }
+
+        .workspace-inner {
+            position: relative;
+            min-width: 100%;
+            min-height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 130px 20px 140px 20px; /* 上下のボタンと被らないように余白を確保 */
+            box-sizing: border-box;
+        }
+
+        .canvas-container-wrapper {
+            position: relative;
+            background: #fff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            transform-origin: 0 0;
+        }
+
+        #bgCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .canvas-container {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 下部ボタン（PDF読み込み / 書き出し ＋ 文字情報保存・読み込み） */
+        .bottom-toolbar {
+            position: absolute;
+            bottom: 24px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bottom-sub-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sub-action-btn {
+            flex: 1;
+            background-color: #bbf7d0;
+            color: #166534;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        .action-btn {
+            width: 100%;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            cursor: pointer;
+        }
+
+        .action-btn:disabled {
+            background-color: #cbd5e1;
+            color: #94a3b8;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .sub-info {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* 非表示用ファイル入力 */
+        input[type="file"] {
+            display: none;
+        }
+
+        /* モーダルダイアログ */
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; opacity: 0; visibility: hidden; transition: 0.2s;
+        }
+        .custom-modal-overlay.active { opacity: 1; visibility: visible; }
+        .custom-modal {
+            background-color: var(--panel-bg);
+            border-radius: 12px; padding: 20px; width: 85%; max-width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box;
+        }
+        .custom-modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+        .custom-modal-message { font-size: 0.85rem; color: #475569; margin-bottom: 20px; line-height: 1.4; white-space: pre-line; }
+        .custom-modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .custom-modal-btn { padding: 8px 16px; font-size: 0.85rem; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; }
+        .custom-modal-btn-cancel { background-color: #f1f5f9; color: var(--text-color); }
+        .custom-modal-btn-ok { background-color: #10b981; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-app-container">
+        <!-- 上部ツールバー -->
+        <div class="top-toolbar">
+            <button id="modeTextBtn" class="tool-btn active">文字</button>
+            <button id="modeCheckBtn" class="tool-btn">レ点</button>
+            <button id="modeCircleBtn" class="tool-btn">〇</button>
+        </div>
+
+        <!-- 削除ボタンエリア -->
+        <div class="delete-toolbar">
+            <button id="deleteBtn" class="delete-btn">削除</button>
+        </div>
+
+        <!-- ワークスペース（PDF背景 ＋ Fabric.js） -->
+        <div class="workspace" id="workspace">
+            <div class="workspace-inner" id="workspaceInner">
+                <div class="canvas-container-wrapper" id="canvasWrapper">
+                    <canvas id="bgCanvas"></canvas>
+                    <canvas id="fabricCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 下部アクションバー -->
+        <div class="bottom-toolbar">
+            <div class="bottom-sub-row">
+                <button id="saveJsonBtn" class="sub-action-btn">文字情報保存</button>
+                <button id="loadJsonBtn" class="sub-action-btn">文字情報読み込み</button>
+            </div>
+            <button id="mainActionBtn" class="action-btn">PDF 読み込み</button>
+            <div id="statusInfo" class="sub-info">ファイルを選択してください</div>
+        </div>
+    </div>
+
+    <!-- 隠しファイル入力 (PDF用 / JSON用) -->
+    <input type="file" id="fileInput" accept="application/pdf">
+    <input type="file" id="jsonInput" accept=".json">
+
+    <!-- モーダル -->
+    <div id="customModalOverlay" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <div id="customModalTitle" class="custom-modal-title">確認</div>
+            <div id="customModalMessage" class="custom-modal-message">メッセージ</div>
+            <div class="custom-modal-buttons">
+                <button id="customModalCancelBtn" class="custom-modal-btn custom-modal-btn-cancel">キャンセル</button>
+                <button id="customModalOkBtn" class="custom-modal-btn custom-modal-btn-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    let pdfDocBytes = null;
+    let pdfDocJS = null;
+    let fontFileBytes = null;
+    let customFontName = 'sans-serif';
+    let currentPageNum = 1;
+    let totalPageCount = 0;
+    let pageSavedObjects = {};
+    const scale = 1.5; // レンダリング解像度
+
+    // 現在の入力モード: 'text', 'check', 'circle'
+    let currentMode = 'text';
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        const fileInput = document.getElementById('fileInput');
+        const jsonInput = document.getElementById('jsonInput');
+        const mainActionBtn = document.getElementById('mainActionBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const saveJsonBtn = document.getElementById('saveJsonBtn');
+        const loadJsonBtn = document.getElementById('loadJsonBtn');
+        const statusInfo = document.getElementById('statusInfo');
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
+
+        const modeTextBtn = document.getElementById('modeTextBtn');
+        const modeCheckBtn = document.getElementById('modeCheckBtn');
+        const modeCircleBtn = document.getElementById('modeCircleBtn');
+
+        // Fabric.jsの初期化
+        const fCanvas = new fabric.Canvas('fabricCanvas', {
+            allowTouchScrolling: true,
+            selection: true
+        });
+
+        // 初期フォントの自動読込
+        await loadDefaultFont();
+
+        // モード切替ボタンの制御
+        function setMode(mode) {
+            currentMode = mode;
+            modeTextBtn.classList.toggle('active', mode === 'text');
+            modeCheckBtn.classList.toggle('active', mode === 'check');
+            modeCircleBtn.classList.toggle('active', mode === 'circle');
+
+            if (mode === 'text') {
+                statusInfo.textContent = "タップした場所に文字を入力できます";
+            } else if (mode === 'check') {
+                statusInfo.textContent = "タップした場所に「✓」を配置します";
+            } else if (mode === 'circle') {
+                statusInfo.textContent = "タップした場所に「〇」を配置します";
+            }
+        }
+
+        modeTextBtn.addEventListener('click', () => setMode('text'));
+        modeCheckBtn.addEventListener('click', () => setMode('check'));
+        modeCircleBtn.addEventListener('click', () => setMode('circle'));
+
+        // 削除ボタンの処理（選択中のオブジェクトを削除）
+        deleteBtn.addEventListener('click', () => {
+            const activeObjects = fCanvas.getActiveObjects();
+            if (activeObjects.length > 0) {
+                activeObjects.forEach(obj => fCanvas.remove(obj));
+                fCanvas.discardActiveObject();
+                fCanvas.renderAll();
+                statusInfo.textContent = "選択した項目を削除しました";
+            } else {
+                statusInfo.textContent = "削除する項目を選択してください";
+            }
+        });
+
+        // 文字情報保存（JSONダウンロード）
+        saveJsonBtn.addEventListener('click', () => {
+            if (!pdfDocBytes) {
+                statusInfo.textContent = "PDFが読み込まれていません";
+                return;
+            }
+            pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => obj.toObject());
+            const jsonStr = JSON.stringify(pageSavedObjects);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = "pdf_text_data.json";
+            link.click();
+            statusInfo.textContent = "文字情報を保存しました";
+        });
+
+        // 文字情報読み込みボタン
+        loadJsonBtn.addEventListener('click', () => {
+            if (!pdfDocBytes) {
+                statusInfo.textContent = "先にPDFを読み込んでください";
+                return;
+            }
+            jsonInput.click();
+        });
+
+        // JSONファイル選択時
+        jsonInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                pageSavedObjects = JSON.parse(text);
+                
+                fCanvas.clear();
+                if (pageSavedObjects[currentPageNum]) {
+                    fabric.util.enlivenObjects(pageSavedObjects[currentPageNum], (objects) => {
+                        objects.forEach(obj => fCanvas.add(obj));
+                        fCanvas.renderAll();
+                        statusInfo.textContent = "文字情報を読み込みました";
+                    });
+                } else {
+                    statusInfo.textContent = "現在のページの保存データはありません";
+                }
+            } catch (err) {
+                console.error(err);
+                statusInfo.textContent = "JSONファイルの読み込みに失敗しました";
+            } finally {
+                jsonInput.value = '';
+            }
+        });
+
+        // 下部ボタンのアクション（未読込時は「PDF読み込み」、読込済みなら「PDF書き出し」）
+        mainActionBtn.addEventListener('click', () => {
+            if (!pdfDocBytes) {
+                fileInput.click();
+            } else {
+                exportPDF();
+            }
+        });
+
+        // ファイル選択時（PDF読み込み）
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            statusInfo.textContent = "PDFを読み込み中...";
+            fCanvas.clear();
+            currentPageNum = 1;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                pdfDocBytes = new Uint8Array(arrayBuffer);
+                pdfDocJS = await pdfjsLib.getDocument({ data: pdfDocBytes.slice(0) }).promise;
+                totalPageCount = pdfDocJS.numPages;
+
+                await renderPage(currentPageNum);
+                
+                mainActionBtn.textContent = "PDF 読み込み（書き出し）";
+                statusInfo.textContent = "文字やスタンプを配置できます";
+            } catch (error) {
+                console.error(error);
+                statusInfo.textContent = "PDFの読み込みに失敗しました";
+                pdfDocBytes = null;
+            }
+        });
+
+        async function renderPage(pageNum) {
+            if (!pdfDocJS) return;
+            const pdfPage = await pdfDocJS.getPage(pageNum);
+            const viewport = pdfPage.getViewport({ scale: scale });
+            
+            bgCanvas.width = viewport.width;
+            bgCanvas.height = viewport.height;
+            fCanvas.setWidth(viewport.width);
+            fCanvas.setHeight(viewport.height);
+
+            await pdfPage.render({ canvasContext: bgCtx, viewport: viewport }).promise;
+        }
+
+        // キャンバスタップ時の処理
+        fCanvas.on('mouse:down', (options) => {
+            if (!pdfDocBytes) return;
+            if (options.target) return;
+
+            const pointer = fCanvas.getPointer(options.e);
+
+            if (currentMode === 'text') {
+                createTextAndEdit('', pointer.x, pointer.y);
+            } else if (currentMode === 'check' || currentMode === 'circle') {
+                const symbol = currentMode === 'check' ? '✓' : '〇';
+                const stampText = new fabric.IText(symbol, {
+                    left: pointer.x,
+                    top: pointer.y,
+                    fontSize: 24,
+                    fontFamily: customFontName,
+                    fill: '#000000',
+                    originX: 'center',
+                    originY: 'center',
+                    lockUniScaling: true,
+                    uniformScaling: true
+                });
+                fCanvas.add(stampText);
+                fCanvas.renderAll();
+            }
+        });
+
+        function createTextAndEdit(initialText, x, y) {
+            const text = new fabric.IText(initialText, {
+                left: x,
+                top: y,
+                fontSize: 20,
+                fontFamily: customFontName,
+                fill: '#000000',
+                editingBorderColor: '#2563eb',
+                lockUniScaling: true,
+                uniformScaling: true
+            });
+
+            text.on('editing:exited', () => {
+                if (!text.text || text.text.trim() === '') {
+                    fCanvas.remove(text);
+                    fCanvas.renderAll();
+                }
+            });
+
+            fCanvas.add(text);
+            fCanvas.setActiveObject(text);
+            text.enterEditing();
+            fCanvas.renderAll();
+        }
+
+        // PDF書き出し処理
+        async function exportPDF() {
+            if (!pdfDocBytes || !fontFileBytes) return;
+
+            mainActionBtn.disabled = true;
+            statusInfo.textContent = "PDFを出力中...";
+
+            try {
+                pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => obj.toObject());
+
+                const { PDFDocument } = window.PDFLib;
+                const pdfDoc = await PDFDocument.load(pdfDocBytes.slice(0));
+                pdfDoc.registerFontkit(window.fontkit);
+
+                const isCollection = fontFileBytes[0] === 0x74 && fontFileBytes[1] === 0x74 && fontFileBytes[2] === 0x63 && fontFileBytes[3] === 0x66;
+                const jpFont = await pdfDoc.embedFont(fontFileBytes, { index: isCollection ? 0 : undefined });
+
+                const pages = pdfDoc.getPages();
+                const firstPage = pages[currentPageNum - 1];
+                const { height } = firstPage.getSize();
+                const pageObjects = pageSavedObjects[currentPageNum];
+
+                if (pageObjects) {
+                    for (const obj of pageObjects) {
+                        if (obj.type === 'i-text') {
+                            const actualFontSize = (obj.fontSize * (obj.scaleY || 1));
+                            let pdfX, pdfY;
+
+                            if ((obj.text === '✓' || obj.text === '〇') && obj.originX === 'center' && obj.originY === 'center') {
+                                const approxWidth = (obj.fontSize / scale);
+                                pdfX = (obj.left / scale) - (approxWidth / 2);
+                                pdfY = height - (obj.top / scale) - (actualFontSize / scale / 2);
+                            } else {
+                                pdfX = obj.left / scale;
+                                pdfY = height - (obj.top / scale) - (actualFontSize / scale);
+                            }
+
+                            firstPage.drawText(obj.text, {
+                                x: pdfX, y: pdfY, size: obj.fontSize / scale, font: jpFont,
+                                color: PDFLib.rgb(0, 0, 0)
+                            });
+                        }
+                    }
+                }
+
+                const modifiedPdfBytes = await pdfDoc.save();
+                const blob = new Blob([modifiedPdfBytes], { type: "application/pdf" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = "mobile_edited.pdf";
+                link.click();
+
+                statusInfo.textContent = "PDF書き出し完了！";
+            } catch (error) {
+                console.error(error);
+                statusInfo.textContent = "出力エラーが発生しました";
+            } finally {
+                mainActionBtn.disabled = false;
+            }
+        }
+
+        async function loadDefaultFont() {
+            try {
+                const res = await fetch('サンプルフォント/NotoSerifJP-VariableFont_wght.ttf');
+                if (!res.ok) throw new Error();
+                const buf = await res.arrayBuffer();
+                fontFileBytes = new Uint8Array(buf);
+                const face = new FontFace('DefaultFont', buf);
+                document.fonts.add(await face.load());
+                customFontName = 'DefaultFont';
+            } catch (e) {
+                console.warn("初期フォントの読込に失敗しました。標準フォントを使用します。");
+            }
+        }
+    });
+</script>
+</body>
+</html>
