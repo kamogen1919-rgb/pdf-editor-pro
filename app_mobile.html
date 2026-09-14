@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
     <title>PDF文字入れ君 Mobile</title>
     <!-- 外部ライブラリ (PC版と共通) -->
     <script src="js/pdf.min.js"></script>
@@ -68,7 +68,7 @@
             border: 2px solid var(--border-color);
             padding: 10px 0;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: var(--text-color);
             text-align: center;
@@ -102,7 +102,7 @@
             background-color: var(--danger-color);
         }
 
-        /* ワークスペース */
+        /* ワークスペース（ピンチズーム・スクロール対応） */
         .workspace {
             flex: 1;
             position: relative;
@@ -110,6 +110,7 @@
             overflow: auto;
             -webkit-overflow-scrolling: touch;
             background-color: var(--bg-color);
+            touch-action: pan-x pan-y pinch-zoom; /* 2本指ズームとスクロールをブラウザに許可 */
         }
 
         .workspace-inner {
@@ -119,7 +120,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 16px;
+            padding: 40px;
             box-sizing: border-box;
         }
 
@@ -128,7 +129,7 @@
             background: #fff;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             border-radius: 4px;
-            transform-origin: 0 0;
+            transform-origin: center center;
         }
 
         #bgCanvas {
@@ -247,14 +248,14 @@
         <!-- 上部コントロールエリア -->
         <div class="top-container">
             <div class="top-toolbar">
-                <button id="modeTextBtn" class="tool-btn active">文字</button>
+                <button id="modeTextBtn" class="tool-btn active">文字入力</button>
                 <button id="modeCheckBtn" class="tool-btn">レ点</button>
                 <button id="modeCircleBtn" class="tool-btn">〇</button>
             </div>
-            <button id="deleteBtn" class="delete-btn">削除</button>
+            <button id="deleteBtn" class="delete-btn">選択中を削除</button>
         </div>
 
-        <!-- ワークスペース（PDF背景 ＋ Fabric.js） -->
+        <!-- ワークスペース（PDF背景 ＋ 2本指ズーム・スクロール対応） -->
         <div class="workspace" id="workspace">
             <div class="workspace-inner" id="workspaceInner">
                 <div class="canvas-container-wrapper" id="canvasWrapper" style="width: 100px; height: 100px;">
@@ -309,7 +310,7 @@
     let originalPdfWidth = 0;
     let originalPdfHeight = 0;
 
-    let currentMode = 'text';
+    let currentMode = 'text'; // 'text', 'check', 'circle'
 
     window.addEventListener('DOMContentLoaded', async () => {
         const fileInput = document.getElementById('fileInput');
@@ -329,8 +330,10 @@
         const modeCheckBtn = document.getElementById('modeCheckBtn');
         const modeCircleBtn = document.getElementById('modeCircleBtn');
 
+        // タッチでの競合を防ぐため、標準のisDrawingModeなどはオフにし、純粋なクリック/タップイベントで処理
         const fCanvas = new fabric.Canvas('fabricCanvas', {
-            allowTouchScrolling: true,
+            fireRightClick: true,
+            stopContextMenu: true,
             selection: true
         });
 
@@ -343,11 +346,11 @@
             modeCircleBtn.classList.toggle('active', mode === 'circle');
 
             if (mode === 'text') {
-                statusInfo.textContent = "ダブルタップした場所に文字を入力できます";
+                statusInfo.textContent = "タップした場所に文字を入力できます";
             } else if (mode === 'check') {
-                statusInfo.textContent = "ダブルタップした場所に「✓」を配置します";
+                statusInfo.textContent = "タップした場所に「✓」を配置します";
             } else if (mode === 'circle') {
-                statusInfo.textContent = "ダブルタップした場所に「〇」を配置します";
+                statusInfo.textContent = "タップした場所に「〇」を配置します";
             }
         }
 
@@ -363,7 +366,7 @@
                 fCanvas.renderAll();
                 statusInfo.textContent = "選択した項目を削除しました";
             } else {
-                statusInfo.textContent = "削除する項目を選択してください";
+                statusInfo.textContent = "削除する項目（または選択中の文字）がありません";
             }
         });
 
@@ -445,7 +448,7 @@
                 await renderPage(currentPageNum);
                 
                 exportPdfBtn.disabled = false;
-                statusInfo.textContent = "ダブルタップで文字やスタンプを配置できます";
+                statusInfo.textContent = "タップで文字やスタンプを配置できます";
             } catch (error) {
                 console.error(error);
                 statusInfo.textContent = "PDFの読み込みに失敗しました";
@@ -484,10 +487,12 @@
             await pdfPage.render({ canvasContext: bgCtx, viewport: viewport }).promise;
         }
 
-        // ダブルタップ（またはダブルクリック）で文字・スタンプを配置
-        fCanvas.on('mouse:dblclick', (options) => {
+        // タップ（クリック）時の処理：既存オブジェクトがない場合、新規作成
+        fCanvas.on('mouse:down', (options) => {
             if (!pdfDocBytes) return;
-            if (options.target) return; // 既存のオブジェクト上なら無視
+            
+            // すでに既存の文字やスタンプをタップしている場合は、選択や編集を優先するため新規作成しない
+            if (options.target) return;
 
             const pointer = fCanvas.getPointer(options.e);
 
@@ -507,6 +512,7 @@
                     uniformScaling: true
                 });
                 fCanvas.add(stampText);
+                fCanvas.setActiveObject(stampText);
                 fCanvas.renderAll();
             }
         });
