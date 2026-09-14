@@ -509,7 +509,19 @@
                 statusInfo.textContent = "PDFが読み込まれていません";
                 return;
             }
-            pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => obj.toObject());
+            // ★ toObject()ではなく、生データを安全に保存する
+            pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => ({
+                type: obj.type,
+                text: obj.text,
+                left: obj.left,
+                top: obj.top,
+                fontSize: obj.fontSize,
+                scaleX: obj.scaleX,
+                scaleY: obj.scaleY,
+                originX: obj.originX,
+                originY: obj.originY
+            }));
+
             const jsonStr = JSON.stringify(pageSavedObjects);
             const blob = new Blob([jsonStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
@@ -722,15 +734,27 @@
         }
 
         async function exportPDF() {
-            if (!pdfDocBytes || !fontFileBytes) return;
+            if (!pdfDocBytes || !fontFileBytes) {
+                statusInfo.textContent = "フォントまたはPDFが読み込まれていません";
+                return;
+            }
 
             exportPdfBtn.disabled = true;
             statusInfo.textContent = "PDFを出力中...";
 
             try {
-                // 1. 現在のページの最新オブジェクトを確実に保存データに反映
-                const currentObjs = fCanvas.getObjects().map(obj => obj.toObject());
-                pageSavedObjects[currentPageNum] = currentObjs;
+                // 1. 現在のページのオブジェクトを安全に保存
+                pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => ({
+                    type: obj.type,
+                    text: obj.text,
+                    left: obj.left,
+                    top: obj.top,
+                    fontSize: obj.fontSize,
+                    scaleX: obj.scaleX,
+                    scaleY: obj.scaleY,
+                    originX: obj.originX,
+                    originY: obj.originY
+                }));
 
                 const { PDFDocument } = window.PDFLib;
                 const pdfDoc = await PDFDocument.load(pdfDocBytes.slice(0));
@@ -741,7 +765,7 @@
 
                 const pages = pdfDoc.getPages();
                 
-                // すべてのページの保存済みオブジェクトをループしてPDFに書き込む（複数ページ対応）
+                // すべてのページの保存済みオブジェクトをループしてPDFに書き込む
                 for (let pageNumStr in pageSavedObjects) {
                     const pageNum = parseInt(pageNumStr, 10);
                     const pageObjects = pageSavedObjects[pageNum];
@@ -754,25 +778,44 @@
 
                     for (const obj of pageObjects) {
                         if (obj.type === 'i-text' && obj.text && obj.text.trim() !== '') {
-                            const pdfFontSize = obj.fontSize / currentScale;
-                            const actualFontSize = pdfFontSize * (obj.scaleY || 1);
+                            // Fabric上のサイズから実際のPDFポイントサイズを算出
+                            // fCanvasで zoom をかけているため、オブジェクトの座標は displayWidth 基準になっています
+                            const displayWidth = originalPdfWidth * currentScale;
+                            const scaleToPdf = originalPdfWidth / displayWidth;
+
+                            const baseFontSize = obj.fontSize * (obj.scaleY || 1);
+                            const actualFontSize = baseFontSize * currentScale * (originalPdfWidth / (originalPdfWidth * currentScale)); // 整理すると obj.fontSize * scaleY になりますが、明示的にPDFオリジナルサイズへ変換
+                            
+                            // 簡略化した正確なスケーリング：
+                            // キャンバス上のピクセル座標をPDFのポイント座標に変換する係数
+                            const pxToPdf = originalPdfWidth / (originalPdfWidth * currentScale); // = 1 / currentScale
+                            
+                            const pdfFontSize = obj.fontSize * (obj.scaleY || 1) * (originalPdfWidth / bgCanvas.width) * (window.devicePixelRatio || 1) * 2.0; // ズームやRetina倍率を考慮した正確な逆算
+                            
+                            // より堅牢な逆算ロジック：
+                            // 画面上の実際の描画位置から、元のPDF上の座標(ポイント)へ確実に換算
+                            const canvasPixelToPdfPoint = originalPdfWidth / fCanvas.width;
+                            const finalFontSize = obj.fontSize * (obj.scaleY || 1) * canvasPixelToPdfPoint;
                             
                             let pdfX, pdfY;
+                            const finalLeft = obj.left * canvasPixelToPdfPoint;
+                            const finalTop = obj.top * canvasPixelToPdfPoint;
 
-                            // スタンプ（✓や〇）か通常の文字かで座標計算を切り替え
-                            if ((obj.text === '✓' || obj.text === '〇') && obj.originX === 'center' && obj.originY === 'center') {
-                                const approxWidth = pdfFontSize * (obj.scaleX || 1);
-                                pdfX = (obj.left / currentScale) - (approxWidth / 2);
-                                pdfY = height - (obj.top / currentScale) - (actualFontSize / 2);
+                            if (obj.originX === 'center' && obj.originY === 'center') {
+                                // スタンプ類（✓, 〇など）
+                                const approxWidth = finalFontSize * 0.8 * (obj.scaleX || 1);
+                                pdfX = finalLeft - (approxWidth / 2);
+                                pdfY = height - finalTop - (finalFontSize / 2);
                             } else {
-                                pdfX = obj.left / currentScale;
-                                pdfY = height - (obj.top / currentScale) - actualFontSize;
+                                // 通常テキスト
+                                pdfX = finalLeft;
+                                pdfY = height - finalTop - finalFontSize;
                             }
 
                             targetPage.drawText(obj.text, {
                                 x: pdfX,
                                 y: pdfY,
-                                size: actualFontSize,
+                                size: finalFontSize,
                                 font: jpFont,
                                 color: PDFLib.rgb(0, 0, 0)
                             });
