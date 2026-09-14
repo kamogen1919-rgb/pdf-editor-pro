@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>PDF文字入れ君 Mobile</title>
     <!-- 外部ライブラリ (PC版と共通) -->
     <script src="js/pdf.min.js"></script>
@@ -30,6 +30,7 @@
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
+            touch-action: pan-x pan-y pinch-zoom;
         }
 
         /* アプリ全体レイアウト */
@@ -102,7 +103,7 @@
             background-color: var(--danger-color);
         }
 
-        /* ワークスペース（ピンチズーム・スクロール対応） */
+        /* ワークスペース（ピンチズーム・スクロールを完全に許可） */
         .workspace {
             flex: 1;
             position: relative;
@@ -110,7 +111,7 @@
             overflow: auto;
             -webkit-overflow-scrolling: touch;
             background-color: var(--bg-color);
-            touch-action: pan-x pan-y pinch-zoom; /* 2本指ズームとスクロールをブラウザに許可 */
+            touch-action: pinch-zoom pan-x pan-y;
         }
 
         .workspace-inner {
@@ -122,6 +123,7 @@
             align-items: center;
             padding: 40px;
             box-sizing: border-box;
+            touch-action: pinch-zoom pan-x pan-y;
         }
 
         .canvas-container-wrapper {
@@ -130,6 +132,7 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             border-radius: 4px;
             transform-origin: center center;
+            touch-action: pinch-zoom pan-x pan-y;
         }
 
         #bgCanvas {
@@ -255,7 +258,7 @@
             <button id="deleteBtn" class="delete-btn">選択中を削除</button>
         </div>
 
-        <!-- ワークスペース（PDF背景 ＋ 2本指ズーム・スクロール対応） -->
+        <!-- ワークスペース（ピンチズーム・スクロール対応） -->
         <div class="workspace" id="workspace">
             <div class="workspace-inner" id="workspaceInner">
                 <div class="canvas-container-wrapper" id="canvasWrapper" style="width: 100px; height: 100px;">
@@ -310,7 +313,7 @@
     let originalPdfWidth = 0;
     let originalPdfHeight = 0;
 
-    let currentMode = 'text'; // 'text', 'check', 'circle'
+    let currentMode = 'text';
 
     window.addEventListener('DOMContentLoaded', async () => {
         const fileInput = document.getElementById('fileInput');
@@ -330,11 +333,11 @@
         const modeCheckBtn = document.getElementById('modeCheckBtn');
         const modeCircleBtn = document.getElementById('modeCircleBtn');
 
-        // タッチでの競合を防ぐため、標準のisDrawingModeなどはオフにし、純粋なクリック/タップイベントで処理
         const fCanvas = new fabric.Canvas('fabricCanvas', {
             fireRightClick: true,
             stopContextMenu: true,
-            selection: true
+            selection: true,
+            enableRetinaScaling: true
         });
 
         await loadDefaultFont();
@@ -490,8 +493,6 @@
         // タップ（クリック）時の処理：既存オブジェクトがない場合、新規作成
         fCanvas.on('mouse:down', (options) => {
             if (!pdfDocBytes) return;
-            
-            // すでに既存の文字やスタンプをタップしている場合は、選択や編集を優先するため新規作成しない
             if (options.target) return;
 
             const pointer = fCanvas.getPointer(options.e);
