@@ -539,7 +539,12 @@
                 fCanvas.clear();
                 if (pageSavedObjects[currentPageNum]) {
                     fabric.util.enlivenObjects(pageSavedObjects[currentPageNum], (objects) => {
-                        objects.forEach(obj => fCanvas.add(obj));
+                        objects.forEach(obj => {
+                            // ★ 読み込んだオブジェクトすべてに縦横比固定を強制適用
+                            obj.lockUniScaling = true;
+                            obj.uniformScaling = true;
+                            fCanvas.add(obj);
+                        });
                         fCanvas.renderAll();
                         statusInfo.textContent = "文字情報を読み込みました";
                     });
@@ -652,7 +657,7 @@
                     fill: '#000000',
                     originX: 'center',
                     originY: 'center',
-                    lockUniScaling: true,
+                    lockUniScaling: true, // 縦横比を固定
                     uniformScaling: true
                 });
                 fCanvas.add(stampText);
@@ -665,12 +670,12 @@
             const text = new fabric.IText(initialTest, {
                 left: x,
                 top: y,
-                fontSize: Math.round(10 * (currentScale / 1.5)),
+                fontSize: Math.round(20 * (currentScale / 1.5)),
                 fontFamily: customFontName,
                 fill: '#000000',
                 editingBorderColor: '#2563eb',
-                lockUniScaling: true, // ← 縦横比を固定する設定
-                uniformScaling: true  // ← 均等に拡大縮小させる設定
+                lockUniScaling: true, // 縦横比を固定
+                uniformScaling: true
             });
 
             text.on('editing:exited', () => {
