@@ -540,9 +540,20 @@
                 if (pageSavedObjects[currentPageNum]) {
                     fabric.util.enlivenObjects(pageSavedObjects[currentPageNum], (objects) => {
                         objects.forEach(obj => {
-                            // ★ 読み込んだオブジェクトすべてに縦横比固定を強制適用
                             obj.lockUniScaling = true;
                             obj.uniformScaling = true;
+                            
+                            // ★ 読み込んだオブジェクトすべて中央ハンドルを非表示にする
+                            if (obj.setControlsVisibility) {
+                                obj.setControlsVisibility({
+                                    mtr: true,
+                                    ml: false,
+                                    mr: false,
+                                    mt: false,
+                                    mb: false
+                                });
+                            }
+                            
                             fCanvas.add(obj);
                         });
                         fCanvas.renderAll();
@@ -657,9 +668,19 @@
                     fill: '#000000',
                     originX: 'center',
                     originY: 'center',
-                    lockUniScaling: true, // 縦横比を固定
+                    lockUniScaling: true,
                     uniformScaling: true
                 });
+
+                // ★ スタンプ側も同様に中央ハンドルを非表示にする
+                stampText.setControlsVisibility({
+                    mtr: true,
+                    ml: false,
+                    mr: false,
+                    mt: false,
+                    mb: false
+                });
+
                 fCanvas.add(stampText);
                 fCanvas.setActiveObject(stampText);
                 fCanvas.renderAll();
@@ -676,6 +697,15 @@
                 editingBorderColor: '#2563eb',
                 lockUniScaling: true, // 縦横比を固定
                 uniformScaling: true
+            });
+
+            // ★ 上下左右の中央ハンドルを非表示にする（角のハンドルだけで拡大縮小させる）
+            text.setControlsVisibility({
+                mtr: true, // 回転ハンドルは残す場合（不要ならfalse）
+                ml: false, // 左中央
+                mr: false, // 右中央
+                mt: false, // 上中央
+                mb: false  // 下中央
             });
 
             text.on('editing:exited', () => {
