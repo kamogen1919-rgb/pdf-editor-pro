@@ -728,8 +728,9 @@
             statusInfo.textContent = "PDFを出力中...";
 
             try {
-                // 現在のページのオブジェクトを保存
-                pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => obj.toObject());
+                // 1. 現在のページの最新オブジェクトを確実に保存データに反映
+                const currentObjs = fCanvas.getObjects().map(obj => obj.toObject());
+                pageSavedObjects[currentPageNum] = currentObjs;
 
                 const { PDFDocument } = window.PDFLib;
                 const pdfDoc = await PDFDocument.load(pdfDocBytes.slice(0));
@@ -739,34 +740,36 @@
                 const jpFont = await pdfDoc.embedFont(fontFileBytes, { index: isCollection ? 0 : undefined });
 
                 const pages = pdfDoc.getPages();
-                const firstPage = pages[currentPageNum - 1];
-                const { height } = firstPage.getSize(); // PDFの元の高さ（ポイント単位）
-                const pageObjects = pageSavedObjects[currentPageNum];
+                
+                // すべてのページの保存済みオブジェクトをループしてPDFに書き込む（複数ページ対応）
+                for (let pageNumStr in pageSavedObjects) {
+                    const pageNum = parseInt(pageNumStr, 10);
+                    const pageObjects = pageSavedObjects[pageNum];
+                    if (!pageObjects || pageObjects.length === 0) continue;
 
-                if (pageObjects) {
+                    const targetPage = pages[pageNum - 1];
+                    if (!targetPage) continue;
+
+                    const { height } = targetPage.getSize();
+
                     for (const obj of pageObjects) {
                         if (obj.type === 'i-text' && obj.text && obj.text.trim() !== '') {
-                            // Fabric.js上の座標・サイズを、PDFのオリジナル座標系に逆算して正確に戻す
-                            // currentScale は (表示幅 / PDFの元幅) なので、画面上のピクセルを currentScale で割ればPDF上のポイントに戻ります
                             const pdfFontSize = obj.fontSize / currentScale;
                             const actualFontSize = pdfFontSize * (obj.scaleY || 1);
                             
                             let pdfX, pdfY;
 
-                            if ((obj.text === '✓' /* レ点や〇の場合 */ || obj.text === '✓' || obj.text === '〇') && obj.originX === 'center' && obj.originY === 'center') {
-                                // 中央基準のスタンプの場合の補正
+                            // スタンプ（✓や〇）か通常の文字かで座標計算を切り替え
+                            if ((obj.text === '✓' || obj.text === '〇') && obj.originX === 'center' && obj.originY === 'center') {
                                 const approxWidth = pdfFontSize * (obj.scaleX || 1);
                                 pdfX = (obj.left / currentScale) - (approxWidth / 2);
-                                // PDF-Libは左下原点のため、Y軸を反転させる
                                 pdfY = height - (obj.top / currentScale) - (actualFontSize / 2);
                             } else {
-                                // 通常の文字入力の場合の補正 (左上基準)
                                 pdfX = obj.left / currentScale;
-                                // Fabricのトップ位置からフォントの高さを考慮してPDFのベースラインに合わせる
                                 pdfY = height - (obj.top / currentScale) - actualFontSize;
                             }
 
-                            firstPage.drawText(obj.text, {
+                            targetPage.drawText(obj.text, {
                                 x: pdfX,
                                 y: pdfY,
                                 size: actualFontSize,
@@ -782,12 +785,12 @@
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = "mobile_edited.pdf";
+                link.download = "edited_document.pdf";
                 link.click();
 
                 statusInfo.textContent = "PDF書き出し完了！";
             } catch (error) {
-                console.error(error);
+                console.error("PDF書き出しエラー:", error);
                 statusInfo.textContent = "出力エラーが発生しました";
             } finally {
                 exportPdfBtn.disabled = false;
