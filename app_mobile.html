@@ -589,19 +589,15 @@
             currentScale = availableWidth / originalPdfWidth;
             if (currentScale > 2.0) currentScale = 2.0;
 
-            // --- 高解像度化（Retina対応＆綺麗に表示するための倍率アップ） ---
             const pixelRatio = window.devicePixelRatio || 1;
-            // 描画倍率をピクセル比と掛け合わせて高精細にする（係数2.0で高画質化）
             const renderMultiplier = pixelRatio * 2.0; 
             const renderScale = currentScale * renderMultiplier;
 
             const viewport = pdfPage.getViewport({ scale: renderScale });
             
-            // 実際のキャンバスのピクセルサイズを高解像度に設定
             bgCanvas.width = viewport.width;
             bgCanvas.height = viewport.height;
             
-            // 画面上の表示サイズ（CSSサイズ）は元の論理サイズに合わせる
             const displayWidth = originalPdfWidth * currentScale;
             const displayHeight = originalPdfHeight * currentScale;
 
@@ -610,12 +606,15 @@
 
             fCanvas.setWidth(displayWidth);
             fCanvas.setHeight(displayHeight);
-            fCanvas.setZoom(renderMultiplier); // Fabric.js側の内部ズームも調整
+            fCanvas.setZoom(renderMultiplier);
 
             canvasWrapper.style.width = displayWidth + 'px';
             canvasWrapper.style.height = displayHeight + 'px';
 
             await pdfPage.render({ canvasContext: bgCtx, viewport: viewport }).promise;
+
+            // ★ ここで確実に中央へ配置する処理を呼ぶ
+            resetZoomAndPan();
         }
 
         // タップ時の処理
