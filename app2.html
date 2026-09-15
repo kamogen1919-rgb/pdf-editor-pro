@@ -546,8 +546,8 @@
             </div>
 
             <div style="display: flex; gap: 4px; margin-bottom: 8px;">
-                <button id="modeZoomBtn" class="btn-ui btn-secondary" style="background-color: #fde047; font-weight: 700;">🔍 移動・ズーム</button>
-                <button id="modeEditBtn" class="btn-ui btn-secondary">✏️ 文字・スタンプ編集</button>
+                <button id="modeZoomBtn" class="btn-ui btn-secondary" style="background-color: #f1f5f9; font-weight: 700;">🔍 移動・ズーム</button>
+                <button id="modeEditBtn" class="btn-ui btn-secondary" style="background-color: #fde047;">✏️ 文字・スタンプ編集</button>
             </div>
 
             <div style="background-color: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 6px;">
@@ -918,8 +918,16 @@
         });
 
         let lastTouchTime = 0;
+        let stampPointerDown = null;
+
+        function getClientPoint(event) {
+            const point = event.changedTouches?.[0] || event.touches?.[0] || event;
+            return { x: point.clientX, y: point.clientY };
+        }
 
         fCanvas.on('mouse:down', (options) => {
+            stampPointerDown = null;
+
             if (options.e.button === 2 && options.target) {
                 options.e.preventDefault();
                 fCanvas.remove(options.target);
@@ -931,17 +939,16 @@
             }
 
             if (isStampMode && !options.target) {
+                // 押した時点では配置せず、離した時にクリックかドラッグかを判定する。
+                const clientPoint = getClientPoint(options.e);
                 const pointer = fCanvas.getPointer(options.e);
-                const confirmedText = new fabric.IText(activeStampSymbol, {
-                    left: pointer.x, top: pointer.y,
-                    fontSize: parseInt(fontSizeInput.value, 10),
-                    fontFamily: customFontName, fill: currentTextColor,
-                    originX: 'center', originY: 'center',
-                    lockUniScaling: true, uniformScaling: true
-                });
-                fCanvas.add(confirmedText);
-                fCanvas.renderAll();
-                saveHistory();
+                stampPointerDown = {
+                    clientX: clientPoint.x,
+                    clientY: clientPoint.y,
+                    canvasX: pointer.x,
+                    canvasY: pointer.y,
+                    symbol: activeStampSymbol
+                };
                 return;
             }
 
@@ -958,6 +965,29 @@
                     lastTouchTime = currentTime;
                 }
             }
+        });
+
+        fCanvas.on('mouse:up', (options) => {
+            if (!stampPointerDown) return;
+
+            const start = stampPointerDown;
+            stampPointerDown = null;
+            const end = getClientPoint(options.e);
+            const moved = Math.hypot(end.x - start.clientX, end.y - start.clientY);
+
+            // マウス・指が10pxを超えて動いた場合は範囲選択のドラッグとみなし、配置しない。
+            if (!isStampMode || moved > 10) return;
+
+            const confirmedText = new fabric.IText(start.symbol, {
+                left: start.canvasX, top: start.canvasY,
+                fontSize: parseInt(fontSizeInput.value, 10),
+                fontFamily: customFontName, fill: currentTextColor,
+                originX: 'center', originY: 'center',
+                lockUniScaling: true, uniformScaling: true
+            });
+            fCanvas.add(confirmedText);
+            fCanvas.renderAll();
+            saveHistory();
         });
 
         fCanvas.on('mouse:dblclick', (options) => {
@@ -1016,10 +1046,10 @@
                 statusMessage.textContent = `${symbol} モード：配置したい場所でクリックしてください（もう一度ボタンを押すと解除）`;
                 
                 if (symbol === '✓') {
-                    insertCheckBtn.style.backgroundColor = '#e0f2fe';
+                    insertCheckBtn.style.backgroundColor = '#fde047';
                     insertCircleBtn.style.backgroundColor = '';
                 } else {
-                    insertCircleBtn.style.backgroundColor = '#e0f2fe';
+                    insertCircleBtn.style.backgroundColor = '#fde047';
                     insertCheckBtn.style.backgroundColor = '';
                 }
             }
@@ -1722,6 +1752,30 @@
     }
 
     if (workspace) {
+        // PC：移動・ズームモード中は、マウスホイールでカーソル位置を中心に拡大縮小。
+        workspace.addEventListener('wheel', (e) => {
+            if (currentMode !== 'zoom' || !canvasWrapper) return;
+            e.preventDefault();
+
+            const oldZoom = zoomScale;
+            const zoomFactor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+            const newZoom = Math.min(5, Math.max(0.5, oldZoom * zoomFactor));
+            if (newZoom === oldZoom) return;
+
+            // 拡大・縮小しても、マウスカーソル下のPDF位置が動かないよう補正する。
+            const rect = canvasWrapper.getBoundingClientRect();
+            const cursorX = e.clientX - rect.left;
+            const cursorY = e.clientY - rect.top;
+            const ratio = newZoom / oldZoom;
+            panX += cursorX * (1 - ratio);
+            panY += cursorY * (1 - ratio);
+            zoomScale = newZoom;
+            updateCanvasTransform();
+
+            document.getElementById('statusMessage').textContent =
+                `「移動・ズーム」モード：表示倍率 ${Math.round(zoomScale * 100)}%`;
+        }, { passive: false });
+
         workspace.addEventListener('touchstart', (e) => {
             if (currentMode !== 'zoom') return;
             startTouches = Array.from(e.touches);
