@@ -20,4 +20,19 @@
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
+  <url>
+  <loc>https://kamogen1919-rgb.github.io/pdf-editor-pro/pdf-nyuryoku.html</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://kamogen1919-rgb.github.io/pdf-editor-pro/pdf-kokyo.html</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.7</priority>
+</url>
+<url>
+  <loc>https://kamogen1919-rgb.github.io/pdf-editor-pro/pdf-sinsei.html</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.7</priority>
+</url>
 </urlset>
