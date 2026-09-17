@@ -266,6 +266,61 @@
         .local-note h3 {
             margin-top: 0;
         }
+        .purpose-guides {
+            max-width: 1000px;
+            margin: 44px auto 0;
+            padding: 0 20px;
+        }
+        .purpose-guides h2 {
+            margin: 0 0 8px;
+            text-align: center;
+            color: var(--text-color);
+            font-size: 1.55rem;
+        }
+        .purpose-guides-intro {
+            margin: 0 0 22px;
+            text-align: center;
+            color: #64748b;
+        }
+        .purpose-guide-list {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+        .purpose-guide-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 76px;
+            padding: 18px 20px;
+            box-sizing: border-box;
+            color: var(--text-color);
+            font-weight: 700;
+            line-height: 1.5;
+            text-decoration: none;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        }
+        .purpose-guide-link::before {
+            content: "→";
+            display: grid;
+            place-items: center;
+            width: 30px;
+            height: 30px;
+            flex: 0 0 30px;
+            color: #ffffff;
+            background: var(--primary-color);
+            border-radius: 50%;
+        }
+        .purpose-guide-link:hover,
+        .purpose-guide-link:focus-visible {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.12);
+        }
         @media (max-width: 600px) {
             header { padding: 16px 20px; }
             .hero { padding: 50px 15px; }
@@ -280,6 +335,7 @@
             .use-cases { justify-content: center; }
             .steps-container { gap: 8px; }
             .step-arrow { display: none; }
+            .purpose-guide-list { grid-template-columns: 1fr; }
         }
         .demo-video {
             position: relative;
@@ -391,6 +447,16 @@
             本ツールは現状では、PC環境での利用をメインに想定して設計されています。対応環境：パソコン、タブレット〇、スマホ✕
         </div>
     </div>
+
+    <section class="purpose-guides" aria-labelledby="purpose-guides-title">
+        <h2 id="purpose-guides-title">用途別の使い方</h2>
+        <p class="purpose-guides-intro">目的に合わせて、PDFへの入力方法をご案内します。</p>
+        <nav class="purpose-guide-list" aria-label="用途別の使い方ページ">
+            <a class="purpose-guide-link" href="pdf-nyuryoku.html">PDFに文字を入力する方法</a>
+            <a class="purpose-guide-link" href="pdf-kokyo.html">公共工事のPDFに文字を入力する方法</a>
+            <a class="purpose-guide-link" href="pdf-sinsei.html">申請書PDFに名前や住所を入力する方法</a>
+        </nav>
+    </section>
 
     <footer>
         <p><a href="faq.html" target="_blank" rel="noopener noreferrer" class="footer-bubble">よくある質問</a> ｜
