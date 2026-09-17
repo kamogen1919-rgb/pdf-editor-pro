@@ -92,7 +92,7 @@
             margin-bottom: 10px;
         }
         .hero h2 {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             color: #60a5fa;
             margin-bottom: 30px;
             font-weight: 600;
@@ -104,21 +104,24 @@
             font-weight: 600;
         }
         .hero-content-box {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0px;
+            width: min(725px, calc(100% - 30px));
+            box-sizing: border-box;
             background: #303d6d;
-            border: 0px solid rgba(147, 197, 253, 0.25);
-            padding: 25px 35px;
+            border: 1px solid rgba(96, 165, 250, 0.55);
+            padding: 30px 42px 20px;
             border-radius: 14px;
-            max-width: 800px;
             margin: 0 auto 20px auto;
             text-align: left;
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
         .hero-text-area {
-            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            max-width: 676px;
+            margin-left: 22px;
+        }
+        .hero-text-area > p {
+            padding-right: 110px;
         }
         .hero p {
             font-size: 1rem;
@@ -135,20 +138,25 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            width: 100%;
         }
         .use-case-tag {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.15);
             color: #e2e8f0;
             padding: 4px 10px;
+            margin-left: 10px;
             border-radius: 20px;
             font-size: 0.82rem;
         }
         .hero-character {
-            width: 85px;
-            height: 85px;
+            position: absolute;
+            top: -2px;
+            right: 0;
+            width: 88px;
+            height: 88px;
             object-fit: contain;
-            flex-shrink: 0;
+            margin-right: 55px;
         }
         .btn-cta {
             display: inline-block;
@@ -323,15 +331,22 @@
         }
         @media (max-width: 600px) {
             header { padding: 16px 20px; }
-            .hero { padding: 50px 15px; }
+            .hero { padding: 34px 15px 40px; }
             .hero h1 { font-size: 1.8rem; }
             .hero h2 { font-size: 1.1rem; }
             .hero-content-box {
-                flex-direction: column;
                 text-align: center;
-                padding: 22px 20px;
+                width: 100%;
+                padding: 24px 18px 20px;
             }
-            .hero-character { width: 75px; height: 75px; order: -1; }
+            .hero-text-area > p { padding-right: 0; }
+            .hero-character {
+                position: static;
+                display: block;
+                width: 78px;
+                height: 78px;
+                margin: 4px auto 14px;
+            }
             .use-cases { justify-content: center; }
             .steps-container { gap: 8px; }
             .step-arrow { display: none; }
@@ -339,8 +354,9 @@
         }
         .demo-video {
             position: relative;
-            max-width: 720px;
-            margin: 30px auto;
+            width: 100%;
+            max-width: 660px;
+            margin: 18px auto 0;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
@@ -390,6 +406,7 @@
                 <p>・ブラウザだけでPDFに文字・レ点・〇を簡単に追加できます。<br>
                 ・PDFデータをサーバーに送信せず、ブラウザ上で処理できます。<br>
                 ・「PDFにちょっと文字を入れたい」という用途に便利です。</p>
+                <img src="character.png" alt="PDF文字入れ君 Pro のキャラクター" class="hero-character">
                 <div class="use-cases">
                     <span class="use-case-tag">📝 履歴書</span>
                     <span class="use-case-tag">📋 各種申請書</span>
@@ -397,13 +414,12 @@
                     <span class="use-case-tag">✨ ちょっとした書き込みに</span>
                 </div>
             </div>
-            <img src="character.png" alt="キャラクター" class="hero-character">
-        </div>
-        <div class="demo-video">
-            <video id="demoVideo" muted loop playsinline preload="metadata">
-                <source src="demo.mp4" type="video/mp4">
-            </video>
-            <button id="videoToggle" class="video-toggle" type="button" aria-controls="demoVideo" aria-pressed="false">⏸ 一時停止</button>
+            <div class="demo-video">
+                <video id="demoVideo" muted loop playsinline preload="metadata">
+                    <source src="demo.mp4" type="video/mp4">
+                </video>
+                <button id="videoToggle" class="video-toggle" type="button" aria-controls="demoVideo" aria-pressed="false">⏸ 一時停止</button>
+            </div>
         </div>
         <p class="trial">🎁 まずは無料で3回お試しいただけます</p>
         
