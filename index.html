@@ -330,26 +330,122 @@
             box-shadow: 0 6px 16px rgba(37, 99, 235, 0.12);
         }
         @media (max-width: 600px) {
-            header { padding: 16px 20px; }
-            .hero { padding: 34px 15px 40px; }
-            .hero h1 { font-size: 1.8rem; }
-            .hero h2 { font-size: 1.1rem; }
-            .hero-content-box {
-                text-align: center;
-                width: 100%;
-                padding: 24px 18px 20px;
+            html,
+            body {
+                max-width: 100%;
+                overflow-x: hidden;
             }
-            .hero-text-area > p { padding-right: 0; }
+            header {
+                height: auto;
+                min-height: 52px;
+                padding: 8px 14px;
+            }
+            .logo {
+                gap: 8px;
+                font-size: 1.08rem;
+                white-space: nowrap;
+            }
+            .logo img {
+                width: 30px;
+                height: 30px;
+                margin-bottom: 2px;
+            }
+            .hero { padding: 28px 12px 34px; }
+            .hero h1 {
+                margin: 0 0 8px;
+                font-size: 1.55rem;
+                line-height: 1.4;
+            }
+            .hero h2 {
+                margin: 0 0 22px;
+                font-size: 1.05rem;
+            }
+            .hero-content-box {
+                width: 100%;
+                margin-bottom: 14px;
+                padding: 20px 14px 16px;
+                border-radius: 12px;
+            }
+            .hero-text-area {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+            }
+            .hero-text-area > p {
+                padding-right: 0;
+                text-align: left;
+            }
+            .hero p {
+                font-size: 0.9rem;
+                line-height: 1.75;
+            }
             .hero-character {
                 position: static;
                 display: block;
-                width: 78px;
-                height: 78px;
-                margin: 4px auto 14px;
+                width: 72px;
+                height: 72px;
+                margin: 8px auto 12px;
             }
-            .use-cases { justify-content: center; }
-            .steps-container { gap: 8px; }
+            .use-cases {
+                justify-content: center;
+                gap: 6px;
+            }
+            .use-case-tag {
+                margin-left: 0;
+                padding: 4px 9px;
+                font-size: 0.76rem;
+            }
+            .demo-video {
+                margin-top: 16px;
+                border-radius: 8px;
+            }
+            .video-toggle {
+                right: 7px;
+                bottom: 7px;
+                padding: 6px 10px;
+                font-size: 0.72rem;
+            }
+            .trial {
+                margin: 8px 0 14px;
+                font-size: 0.88rem;
+            }
+            .btn-cta {
+                width: min(100%, 320px);
+                box-sizing: border-box;
+                padding: 13px 18px;
+                font-size: 1rem;
+            }
+            .price-card {
+                margin-top: 18px;
+            }
+            .price-card .small-note {
+                padding: 0 8px;
+                font-size: 0.82rem;
+                line-height: 1.65;
+            }
+            .price-card .big-price { font-size: 1.65rem; }
+            .steps-container {
+                gap: 8px;
+                margin-top: 26px;
+            }
+            .step-badge {
+                width: min(100%, 330px);
+                box-sizing: border-box;
+                padding: 9px 12px;
+                font-size: 0.82rem;
+            }
             .step-arrow { display: none; }
+            .features {
+                padding: 0 14px;
+                gap: 14px;
+            }
+            .feature-card { padding: 22px 18px; }
+            .feature-card h3 {
+                font-size: 1.08rem;
+                line-height: 1.6;
+            }
+            .purpose-guides { padding: 0 14px; }
+            .purpose-guides h2 { font-size: 1.3rem; }
             .purpose-guide-list { grid-template-columns: 1fr; }
         }
         .demo-video {
@@ -385,6 +481,20 @@
         .video-toggle:hover,
         .video-toggle:focus-visible {
             background: rgba(15, 23, 42, 0.96);
+        }
+
+        /* 動画の基本スタイルより後でスマホ用サイズを適用 */
+        @media (max-width: 600px) {
+            .demo-video {
+                margin-top: 16px;
+                border-radius: 8px;
+            }
+            .video-toggle {
+                right: 7px;
+                bottom: 7px;
+                padding: 6px 10px;
+                font-size: 0.72rem;
+            }
         }
     </style>
 </head>
