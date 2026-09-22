@@ -31,7 +31,7 @@
             line-height: 1.6;
         }
         header {
-            background-color: var(--panel-bg);
+            background-color: #ffffff;
             border-bottom: 1px solid var(--border-color);
             padding: 8px 16px;
             display: flex;
@@ -44,15 +44,25 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: var(--primary-color);
         }
-        .logo img {
+        .logo-home {
+            display: inline-flex;
+            align-items: center;
+            flex: 0 0 auto;
+            line-height: 0;
+        }
+        .logo-title {
+            display: block;
+            width: auto;
+            height: 32px;
+            margin: 5px 0 0 0;
+        }
+        .logo-character {
+            display: block;
             width: 32px;
             height: 32px;
             object-fit: contain;
-            margin-bottom: 5px;
+            margin-right: 6px;
         }
         .hero {
             background: linear-gradient(180deg, #2f2f43 0%, #385081 100%);
@@ -267,7 +277,10 @@
 .breadcrumb{max-width:960px;margin:0 auto;padding:18px 20px 0;color:#64748b;font-size:.85rem}.breadcrumb a{color:var(--primary-color);text-decoration:none}
 @media(max-width:600px){.article-wrap{padding-top:28px}.article-card{padding:22px 18px}.article-card h1{font-size:1.6rem}.article-card h2{font-size:1.3rem}}
 </style></head><body>
-<header><div class="logo">PDF文字入れ君 Pro<img src="character.png" alt="マスコットキャラクター"></div></header>
+<header><div class="logo">
+            <a class="logo-home" href="index.html" aria-label="PDF文字入れ君 Pro トップページへ"><img class="logo-title" src="pdf.gif" alt="PDF文字入れ君 Pro" width="340" height="56"></a>
+            <img class="logo-character" src="character.png" alt="マスコットキャラクター">
+        </div></header>
 <div class="breadcrumb"><a href="index.html">PDF文字入れ君 Pro</a> › PDFに文字を入力する方法</div>
 <main class="article-wrap">
 <section class="article-card">

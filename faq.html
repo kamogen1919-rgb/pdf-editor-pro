@@ -54,15 +54,25 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: var(--primary-color);
         }
-        .logo img {
+        .logo-home {
+            display: inline-flex;
+            align-items: center;
+            flex: 0 0 auto;
+            line-height: 0;
+        }
+        .logo-title {
+            display: block;
+            width: auto;
+            height: 32px;
+            margin: 5px 0 0 0;
+        }
+        .logo-character {
+            display: block;
             width: 32px;
             height: 32px;
             object-fit: contain;
-            margin-bottom: 4px;
+            margin-right: 6px;
         }
 
         .back-link {
@@ -158,8 +168,8 @@
     <!-- ヘッダー -->
     <header>
         <div class="logo">
-            PDF文字入れ君 Pro
-            <img src="character.png" alt="マスコットキャラクター">
+            <a class="logo-home" href="index.html" aria-label="PDF文字入れ君 Pro トップページへ"><img class="logo-title" src="pdf.gif" alt="PDF文字入れ君 Pro" width="340" height="56"></a>
+            <img class="logo-character" src="character.png" alt="マスコットキャラクター">
         </div>
     </header>
 
