@@ -1517,9 +1517,10 @@
                 // ローカルのCMapを使い、埋め込みフォントをCanvasへ字形として描画する。
                 const loadingTask = pdfjsLib.getDocument({
                     data: pdfDocBytes.slice(0),
-                    cMapUrl: './cmaps/',
+                    // Worker内でも同じURLを使えるように絶対URLにする。
+                    cMapUrl: new URL('./cmaps/', document.baseURI).href,
                     cMapPacked: true,
-                    standardFontDataUrl: './standard_fonts/',
+                    standardFontDataUrl: new URL('./standard_fonts/', document.baseURI).href,
                     disableFontFace: true
                 });
                 loadingTask.onProgress = ({ loaded, total }) => {
