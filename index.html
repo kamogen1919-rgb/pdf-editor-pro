@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
 <meta name="description" content="ブラウザでPDFに文字入れ。インストール不要＆サーバー送信なし。買い切り980円。公共工事や各種申請のPDFに、文字・レ点・〇をサクッと書き込みできます。">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=1000">
 <meta property="og:title" content="PDF文字入れ君 Pro - ブラウザで動く安全・簡単なPDF編集ツール">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://kamogen1919-rgb.github.io/pdf-editor-pro/">
@@ -327,15 +327,12 @@
             transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
         }
         .purpose-guide-link::before {
-            content: "→";
-            display: grid;
-            place-items: center;
+            content: "";
+            display: block;
             width: 30px;
             height: 30px;
             flex: 0 0 30px;
-            color: #ffffff;
-            background: var(--primary-color);
-            border-radius: 50%;
+            background: url("character.png") center / contain no-repeat;
         }
         .purpose-guide-link:hover,
         .purpose-guide-link:focus-visible {
@@ -343,127 +340,7 @@
             border-color: var(--primary-color);
             box-shadow: 0 6px 16px rgba(37, 99, 235, 0.12);
         }
-        @media (max-width: 600px) {
-            html,
-            body {
-                max-width: 100%;
-                overflow-x: hidden;
-            }
-            header {
-                height: auto;
-                min-height: 52px;
-                padding: 8px 14px;
-            }
-            .logo {
-                gap: 8px;
-            }
-            .logo-title {
-                height: 30px;
-                margin-top: 2px;
-            }
-            .logo-character {
-                width: 30px;
-                height: 30px;
-                margin-right: 0;
-            }
-            .hero { padding: 28px 12px 34px; }
-            .hero h1 {
-                margin: 0 0 8px;
-                font-size: 1.55rem;
-                line-height: 1.4;
-            }
-            .hero h2 {
-                margin: 0 0 22px;
-                font-size: 1.05rem;
-            }
-            .hero-content-box {
-                width: 100%;
-                margin-bottom: 14px;
-                padding: 20px 14px 16px;
-                border-radius: 12px;
-            }
-            .hero-text-area {
-                width: 100%;
-                max-width: none;
-                margin: 0;
-            }
-            .hero-text-area > p {
-                padding-right: 0;
-                text-align: left;
-            }
-            .hero p {
-                font-size: 0.9rem;
-                line-height: 1.75;
-            }
-            .hero-character {
-                position: static;
-                display: block;
-                width: 72px;
-                height: 72px;
-                margin: 8px auto 12px;
-            }
-            .use-cases {
-                justify-content: center;
-                gap: 6px;
-            }
-            .use-case-tag {
-                margin-left: 0;
-                padding: 4px 9px;
-                font-size: 0.76rem;
-            }
-            .demo-video {
-                margin-top: 16px;
-                border-radius: 8px;
-            }
-            .video-toggle {
-                right: 7px;
-                bottom: 7px;
-                padding: 6px 10px;
-                font-size: 0.72rem;
-            }
-            .trial {
-                margin: 8px 0 14px;
-                font-size: 0.88rem;
-            }
-            .btn-cta {
-                width: min(100%, 320px);
-                box-sizing: border-box;
-                padding: 13px 18px;
-                font-size: 1rem;
-            }
-            .price-card {
-                margin-top: 18px;
-            }
-            .price-card .small-note {
-                padding: 0 8px;
-                font-size: 0.82rem;
-                line-height: 1.65;
-            }
-            .price-card .big-price { font-size: 1.65rem; }
-            .steps-container {
-                gap: 8px;
-                margin-top: 26px;
-            }
-            .step-badge {
-                width: min(100%, 330px);
-                box-sizing: border-box;
-                padding: 9px 12px;
-                font-size: 0.82rem;
-            }
-            .step-arrow { display: none; }
-            .features {
-                padding: 0 14px;
-                gap: 14px;
-            }
-            .feature-card { padding: 22px 18px; }
-            .feature-card h3 {
-                font-size: 1.08rem;
-                line-height: 1.6;
-            }
-            .purpose-guides { padding: 0 14px; }
-            .purpose-guides h2 { font-size: 1.3rem; }
-            .purpose-guide-list { grid-template-columns: 1fr; }
-        }
+        
         .demo-video {
             position: relative;
             width: 100%;
@@ -500,18 +377,7 @@
         }
 
         /* 動画の基本スタイルより後でスマホ用サイズを適用 */
-        @media (max-width: 600px) {
-            .demo-video {
-                margin-top: 16px;
-                border-radius: 8px;
-            }
-            .video-toggle {
-                right: 7px;
-                bottom: 7px;
-                padding: 6px 10px;
-                font-size: 0.72rem;
-            }
-        }
+        
     </style>
 </head>
 <body>
