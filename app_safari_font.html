@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+<meta name="description" content="ブラウザでPDFに文字入れ。インストール不要＆サーバー送信なし。買い切り980円。公共工事や各種申請のPDFに、文字・レ点・〇をサクッと書き込みできます。">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:title" content="PDF文字入れ君 Pro - ブラウザで動く安全・簡単なPDF編集ツール">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kamogen1919-rgb.github.io/pdf-editor-pro/">
+<meta property="og:image" content="https://kamogen1919-rgb.github.io/pdf-editor-pro/ogp.png">
+<meta property="og:description" content="インストール不要＆サーバー送信なし。買い切り980円でPDFに文字・レ点・〇をサクッと書き込み。">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://kamogen1919-rgb.github.io/pdf-editor-pro/app.html">
+<link rel="icon" type="image/png" href="character.png">
+<link rel="apple-touch-icon" href="character.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>PDF文字入れ君 Pro</title>
+    <!-- 外部ライブラリ -->
+    <script src="js/pdf.min.js"></script>
+    <script src="js/fabric.min.js"></script>
+    <script src="js/pdf-lib.min.js"></script>
+    <script src="js/fontkit.umd.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6NHVK2XWZ1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-6NHVK2XWZ1');
+</script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #10b981;
+            --success-hover: #059669;
+            --danger-color: #ef4444;
+            --bg-color: #64748b;
+            --panel-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-color: #1e293b;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-top: 52px;
+            padding-bottom: 45px;
+        }
+
+        header {
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 52px;
+            box-sizing: border-box;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            flex: 0 0 auto;
+            line-height: 0;
+        }
+
+        .logo img {
+            display: block;
+            width: auto;
+            height: 32px;
+            margin: 5px 0 0 0;
+        }
+
+        .character-balloon-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            gap: 8px;
+            
+        }
+
+        .character-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            margin-right: 6px;
+        }
+
+        .status-bubble {
+            position: relative;
+            background-color: var(--primary-color);
+            color: #ffffff;
+            padding: 5px 10px;
+            
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 50vw;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .status-bubble::before {
+            content: "";
+            position: absolute;
+            top: 50%;margin-left: 0px;
+            left: -6px;
+            transform: translateY(-50%);
+            border-width: 6px 6px 6px 0;
+            border-style: solid;
+            border-color: transparent var(--primary-color) transparent transparent;
+            display: block;
+            width: 0;
+            height: 0;
+        }
+
+        .footer-balloon-container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            gap: 8px;
+            margin-left: 6px;
+        }
+
+        .footer-bubble {
+            position: relative;
+            background-color: #ffffff;
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .footer-bubble::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: -5px;
+            transform: translateY(-50%);
+            border-width: 5px 5px 5px 0;
+            border-style: solid;
+            border-color: transparent var(--border-color) transparent transparent;
+            display: block;
+            width: 0;
+            height: 0;
+        }
+        .footer-bubble::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: -4px;
+            transform: translateY(-50%);
+            border-width: 4px 4px 4px 0;
+            border-style: solid;
+            border-color: transparent #ffffff transparent transparent;
+            display: block;
+            width: 0;
+            height: 0;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            min-height: calc(100vh - 52px);
+            position: relative;
+        }
+
+        .sidebar {
+            width: 250px;
+            min-width: 250px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            flex-grow: 0;
+            height: calc(100vh - 52px);
+            position: sticky;
+            top: 52px;
+        }
+
+        .sidebar > div {
+            display: flex;
+            flex-direction: column;
+            gap: 0px;
+        }
+
+        .align-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-top: -4px;
+            margin-bottom: 0px;
+        }
+
+        .btn-align {
+            padding: 6px 0;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        .workspace-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .workspace {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            background-color: var(--bg-color);
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .workspace-inner {
+            position: relative;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            box-sizing: border-box;
+            min-width: max-content;
+            min-height: max-content;
+            padding: 20px;
+        }
+
+        .footer-area {
+            padding: 8px 16px;
+            font-size: 0.7rem;
+            color: #64748b;
+            background-color: #ffffff;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        .footer-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .canvas-container-wrapper {
+            /* flex内のabsolute要素は配置基準とサイズを失い、描画済みCanvasが
+               表示領域外へ出ることがあるため通常配置にする。 */
+            position: relative;
+            flex: 0 0 auto;
+            background: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            transform-origin: 0 0;
+            touch-action: auto;
+            will-change: transform;
+        }
+
+        #bgCanvas { position: absolute; top: 0; left: 0; z-index: 1; }
+        .canvas-container { position: relative; z-index: 2; }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .file-upload-box {
+            border: 2px dashed var(--border-color);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: block;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+        .file-upload-box input { display: none; }
+        #fontInput {
+            display: block;
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            clip-path: inset(50%);
+        }
+
+        /* フォント変更欄は通常の設定項目として見えるよう実線にする。
+           PDFファイル選択欄の破線は従来どおり維持する。 */
+        .file-upload-box.font-upload-solid {
+            border: 1px solid var(--border-color);
+        }
+
+        #localFontSelect {
+            width: 100%;
+            padding: 8px 27px 8px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #f8fafc;
+            color: #111;
+            font-size: 13px;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='m3 5 4 4 4-4' fill='none' stroke='%23334155' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            cursor: pointer;
+        }
+        #localFontSelect:focus {
+            outline: none;
+            border: 1px solid var(--border-color);
+            background-color: #f1f5f9;
+        }
+        #fontChooseBtn {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .file-upload-box.guide-active {
+            background-color: var(--success-color) !important;
+            color: #ffffff !important;
+            border: none !important;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+            animation: pdfGuidePulse 2s infinite;
+        }
+
+        /* PDF未選択時：「PDFファイルを選択」をやさしく脈動させて誘導 */
+        @keyframes pdfGuidePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70%  { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* ヘッダーの青い吹き出し：案内文が変わるたびに目を引くパルス表示 */
+        .status-bubble.status-guide-pulse {
+            animation: statusGuidePulse 2s infinite;
+        }
+
+        @keyframes statusGuidePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.38); }
+            70%  { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+
+        .font-download-link {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            font-size: 0.7rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            margin-top: 4px;
+            padding-left: 4px;
+            font-weight: 600;
+        }
+        .font-download-link:hover { text-decoration: underline; }
+
+        #fontPreviewArea {
+            background-color: #f8fafc;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            text-align: center;
+            color: #333;
+            margin-top: 4px;
+        }
+
+        .btn-ui {
+            width: 100%;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-sizing: border-box;
+        }
+        .btn-primary { background-color: var(--primary-color); color: white; text-decoration: none; }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-success:disabled { background-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
+        .btn-secondary { background-color: #f1f5f9; color: var(--text-color); border: 1px solid var(--border-color); }
+        .btn-symbol {
+            background-color: #ffffff;
+            color: var(--text-color);
+            border: 1px solid #cbd5e1;
+            padding: 6px;
+        }
+        .label-btn-disabled {
+            background-color: #f1f5f9 !important;
+            color: #cbd5e1 !important;
+            border-color: #e2e8f0 !important;
+            cursor: not-allowed !important;
+        }
+
+        .page-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+        .page-btn {
+            background: white;
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .color-palette { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+        .color-btn {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 1px solid #fff;
+            box-shadow: 0 0 0 1px var(--border-color);
+            cursor: pointer;
+        }
+        .color-btn.active { transform: scale(1.15); box-shadow: 0 0 0 2px var(--primary-color); }
+
+        .divider { border: 0; border-top: 1px solid var(--border-color); margin: 6px 0; }
+
+        .security-info {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #166534;
+            line-height: 1.3;
+        }
+
+        .custom-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; opacity: 0; visibility: hidden; transition: 0.2s;
+        }
+        .custom-modal-overlay.active { opacity: 1; visibility: visible; }
+        .custom-modal {
+            background-color: var(--panel-bg);
+            border-radius: 8px; padding: 20px; width: 90%; max-width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box;
+        }
+        .custom-modal-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; }
+        .custom-modal-message { font-size: 0.85rem; color: #475569; margin-bottom: 20px; line-height: 1.4; white-space: pre-line; }
+        .custom-modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .custom-modal-btn { padding: 6px 16px; font-size: 0.8rem; border-radius: 4px; font-weight: 600; cursor: pointer; border: none; }
+        .custom-modal-btn-cancel { background-color: #f1f5f9; color: var(--text-color); }
+        .custom-modal-btn-ok { background-color: #10b981; color: white; }
+
+        .howto-link {
+            color: var(--primary-color);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+        }
+        .howto-link:hover {
+            background-color: #eff6ff;
+            text-decoration: underline;
+        }
+        .video-help-links {
+            margin-left: auto;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .howto-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background-color: rgba(0, 0, 0, 0.75);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .howto-modal-content {
+            position: relative;
+            width: min(900px, 95vw);
+            max-height: 90vh;
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: auto;
+        }
+        .howto-modal-content h2 {
+            margin: 0 40px 15px 0;
+            font-size: 20px;
+            color: var(--text-color);
+        }
+        .howto-modal-content video {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            background-color: #000000;
+        }
+        .howto-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-size: 30px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .howto-close:hover { color: #1e293b; }
+
+        /* スマートフォン専用案内画面 */
+        .smartphone-blocker {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            body.smartphone-guide-open {
+                overflow: hidden;
+            }
+
+            .smartphone-blocker {
+                position: fixed;
+                inset: 0;
+                z-index: 999999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-sizing: border-box;
+                padding: 20px;
+                background: #f1f5f9;
+                overflow-y: auto;
+            }
+
+            .smartphone-guide {
+                width: 100%;
+                max-width: 420px;
+                box-sizing: border-box;
+                padding: 30px 22px;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                box-shadow: 0 12px 36px rgba(15, 23, 42, 0.16);
+                text-align: center;
+            }
+
+            .smartphone-guide-icon {
+                margin-bottom: 16px;
+                font-size: 42px;
+                line-height: 1;
+            }
+
+            .smartphone-guide h1 {
+                margin: 0 0 14px;
+                color: #1e293b;
+                font-size: 21px;
+                line-height: 1.5;
+            }
+
+            .smartphone-guide-text {
+                margin: 0 0 20px;
+                color: #475569;
+                font-size: 15px;
+                line-height: 1.8;
+            }
+
+            .smartphone-guide-url {
+                margin-bottom: 14px;
+                padding: 11px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                color: #64748b;
+                font-size: 12px;
+                line-height: 1.5;
+                overflow-wrap: anywhere;
+            }
+
+            .smartphone-guide-button {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+                margin: 10px 0;
+                padding: 14px 16px;
+                border: 0;
+                border-radius: 8px;
+                background: #2563eb;
+                color: #ffffff;
+                font: inherit;
+                font-size: 16px;
+                font-weight: 700;
+                text-align: center;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+            .smartphone-guide-button:active {
+                transform: translateY(1px);
+            }
+
+            .smartphone-guide-button.copy-button {
+                background: #ffffff;
+                color: #2563eb;
+                border: 1px solid #2563eb;
+            }
+
+            .smartphone-guide-button.mail-button {
+                background: #475569;
+            }
+
+            .copy-message {
+                min-height: 1.4em;
+                margin: 10px 0 0;
+                color: #15803d;
+                font-size: 14px;
+                font-weight: 700;
+                visibility: hidden;
+            }
+
+            .copy-message.is-visible {
+                visibility: visible;
+            }
+
+            .smartphone-guide-back {
+                display: inline-block;
+                margin-top: 14px;
+                color: #64748b;
+                font-size: 14px;
+                text-decoration: underline;
+            }
+        }
+
+        /* 操作できるボタン類すべて：カーソルを近づけた時の軽い動き */
+        .btn-ui,
+        .page-btn,
+        .file-upload-box,
+        .howto-link,
+        .footer-bubble,
+        .custom-modal-btn,
+        .smartphone-guide-button,
+        #whiteoutInfoBtn {
+            transition:
+                transform 0.16s ease,
+                background-color 0.16s ease,
+                border-color 0.16s ease,
+                box-shadow 0.16s ease;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .btn-ui:not(:disabled):hover,
+            .page-btn:not(:disabled):hover,
+            .file-upload-box:hover,
+            .howto-link:hover,
+            .footer-bubble:hover,
+            .custom-modal-btn:hover,
+            .smartphone-guide-button:hover,
+            #whiteoutInfoBtn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+            }
+
+            .btn-secondary:not(:disabled):hover,
+            .btn-symbol:not(:disabled):hover,
+            .page-btn:not(:disabled):hover {
+                background-color: #e8eef7;
+                border-color: #b8c5d8;
+            }
+
+            /* 選択中（黄色）のモードボタンは黄色を保ったまま動かす */
+            .btn-ui[style*="rgb(253, 224, 71)"]:not(:disabled):hover,
+            .btn-ui[style*="#fde047"]:not(:disabled):hover {
+                background-color: #fde047 !important;
+            }
+        }
+
+        .btn-ui:not(:disabled):active,
+        .page-btn:not(:disabled):active,
+        .file-upload-box:active,
+        .howto-link:active,
+        .footer-bubble:active,
+        .custom-modal-btn:active,
+        .smartphone-guide-button:active,
+        #whiteoutInfoBtn:active {
+            transform: translateY(0) scale(0.985);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .btn-ui,
+            .page-btn,
+            .file-upload-box,
+            .howto-link,
+            .footer-bubble,
+            .custom-modal-btn,
+            .smartphone-guide-button,
+            #whiteoutInfoBtn {
+                transition: none;
+            }
+
+            .btn-ui:not(:disabled):hover,
+            .page-btn:not(:disabled):hover,
+            .file-upload-box:hover,
+            .howto-link:hover,
+            .footer-bubble:hover,
+            .custom-modal-btn:hover,
+            .smartphone-guide-button:hover,
+            #whiteoutInfoBtn:hover,
+            .btn-ui:not(:disabled):active,
+            .page-btn:not(:disabled):active,
+            .file-upload-box:active,
+            .howto-link:active,
+            .footer-bubble:active,
+            .custom-modal-btn:active,
+            .smartphone-guide-button:active,
+            #whiteoutInfoBtn:active {
+                transform: none;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="smartphoneBlocker" class="smartphone-blocker" role="dialog" aria-modal="true" aria-labelledby="smartphoneGuideTitle">
+        <div class="smartphone-guide">
+            <div class="smartphone-guide-icon" aria-hidden="true">📱 → 💻</div>
+            <h1 id="smartphoneGuideTitle">スマートフォンでは編集できません</h1>
+            <p class="smartphone-guide-text">
+                PDFの編集には、パソコンまたはタブレットをご利用ください。<br>
+                下のボタンから、このページのURLをPCへ送れます。
+            </p>
+            <div class="smartphone-guide-url">https://kamogen1919-rgb.github.io/pdf-editor-pro/app.html</div>
+            <button type="button" id="sharePcUrl" class="smartphone-guide-button">📤 PCへ送る・共有する</button>
+            <button type="button" id="copyPcUrl" class="smartphone-guide-button copy-button">URLをコピー</button>
+            <a id="mailPcUrl" class="smartphone-guide-button mail-button" href="#">メールでURLを送る</a>
+            <p id="copyMessage" class="copy-message" role="status" aria-live="polite">URLをコピーしました</p>
+            <a href="https://kamogen1919-rgb.github.io/pdf-editor-pro/" class="smartphone-guide-back">← トップページへ戻る</a>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo-area">
+            <a class="logo" href="index.html" target="_blank" rel="noopener noreferrer" aria-label="PDF文字入れ君 Pro トップページへ（新しいタブ）">
+                <img src="pdf.gif" alt="PDF文字入れ君 Pro" width="340" height="56">
+            </a>
+            <div class="character-balloon-container">
+                <img src="character.png" alt="キャラクター" class="character-img">
+                <div id="statusMessage" class="status-bubble status-guide-pulse">PDFファイルを選択してください。</div>
+            </div>
+            <div class="section-title" style="font-size: 0.8rem; color: #64748b; margin-left: 8px; white-space: nowrap;">
+                ※Ctrl+Zで戻る&nbsp;&nbsp;※Ctrl+Cでコピー、Ctrl+Vで貼り付け
+            </div>
+        </div>
+        <div class="video-help-links" aria-label="操作説明動画">
+            <a href="#" class="howto-link" onclick="openHowTo('demo.mp4', '基本的な使い方'); return false;">▶ 基本的な使い方（25秒）</a>
+            <a href="#" class="howto-link" onclick="openHowTo('demo2.mp4', '編集ツールの説明'); return false;">▶ 編集ツールの説明（58秒）</a>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div>
+                <label id="pdfUploadBox" class="file-upload-box guide-active">
+                    <span>📁 PDFファイルを選択</span>
+                    <input type="file" id="fileInput" accept="application/pdf">
+                </label>
+            </div>
+
+            <div style="position:relative">
+                <select id="localFontSelect" aria-label="フォントを選択">
+                    <option value="" disabled>フォントを選択してください</option>
+                    <optgroup label="おすすめフォント">
+                        <option value="default" selected>Noto Serif JP（明朝）</option>
+                        <option value="recommended:sans">Noto Sans JP（ゴシック）</option>
+                        <option value="recommended:maru">Kosugi Maru（丸ゴシック）</option>
+                    </optgroup>
+                    <option value="file">＋ フォントファイルを読み込む (.ttf/.otf)</option>
+                </select>
+                <button type="button" id="fontChooseBtn" aria-label="フォント一覧を開く" title="PCフォントの使用には初回のアクセス許可が必要です"></button>
+                <label id="fontFilePicker" class="file-upload-box font-upload-solid" style="display:none;margin-top:6px" for="fontInput">
+                    フォントファイルを選択 (.ttf/.otf)
+                    <input type="file" id="fontInput" accept=".ttf,.otf">
+                </label>
+                <div id="fontPreviewArea" style="display:none"></div>
+            </div>
+
+            <div>
+                <div class="page-nav">
+                    <button id="prevPageBtn" class="page-btn" disabled>◀ 前へ</button>
+                    <span id="pageInfo" style="font-size: 0.75rem; font-weight: 600;">0 / 0 ページ</span>
+                    <button id="nextPageBtn" class="page-btn" disabled>次へ ▶</button>
+                </div>
+            </div>
+
+            <div class="edit-tool-panel" style="background-color: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px;">
+                    <button id="modeZoomBtn" class="btn-ui btn-secondary" style="background-color: #f1f5f9; font-weight: 700;" disabled>🔍 移動・ズーム</button>
+                    <button id="modeEditBtn" class="btn-ui btn-secondary" style="background-color: #f1f5f9;" disabled>✏️ 文字・スタンプ編集</button>
+                </div>
+
+                
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.75rem; font-weight: 600;">サイズ:</span>
+                    <input type="number" id="fontSizeInput" value="20" min="10" max="100" style="width: 70px; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.8rem;">
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.75rem; font-weight: 600;">カラー:</span>
+                    <div class="color-palette">
+                        <button class="color-btn active" data-color="#000000" style="background-color: #000000;"></button>
+                        <button class="color-btn" data-color="#ff0000" style="background-color: #ff0000;"></button>
+                        <button class="color-btn" data-color="#0000ff" style="background-color: #0000ff;"></button>
+                        <button class="color-btn" data-color="#008000" style="background-color: #008000;"></button>
+                        <button class="color-btn" data-color="#ffffff" style="background-color: #ffffff;"></button>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                    <span style="font-size: 0.75rem; font-weight: 600; color: #64748b;">スタンプ配置 (クリックで置く)</span>
+                    <div style="display: flex; gap: 6px;">
+                        <button id="insertCheckBtn" class="btn-ui btn-symbol" disabled style="flex: 1;">✓ レ点</button>
+                        <button id="insertCircleBtn" class="btn-ui btn-symbol" disabled style="flex: 1;">〇をする</button>
+                    </div>
+                    <div style="position:relative; margin-top:6px;">
+                        <button id="whiteoutBtn" class="btn-ui btn-symbol" disabled style="margin-top:0;">▭ 白で隠す（ドラッグ）</button>
+                        <button id="whiteoutInfoBtn" type="button" aria-label="白で隠す機能の説明"
+                            style="position:absolute; right:8px; top:50%; transform:translateY(-50%); border:none; background:transparent; color:#64748b; font-size:1.0rem; cursor:pointer; padding:2px 4px; line-height:1;">ⓘ</button>
+                        <div id="whiteoutInfoPopup"
+                            style="display:none; position:absolute; left:0; right:0; top:calc(100% + 5px); z-index:30; padding:7px 8px; border:1px solid var(--border-color); border-radius:6px; background:#ffffff; color:#64748b; font-size:0.68rem; line-height:1.4; box-shadow:0 4px 12px rgba(0,0,0,0.12);">
+                            元の文字データは削除されません。白い矩形を重ねて隠します。
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-title" style="margin-top: 8px;">📐 整列（２つ以上選んで押す）</div>
+                <div class="align-container">
+                    <button id="alignLeftBtn" class="btn-ui btn-secondary btn-align">左</button>
+                    <button id="alignCenterBtn" class="btn-ui btn-secondary btn-align">中</button>
+                    <button id="alignRightBtn" class="btn-ui btn-secondary btn-align">右</button>
+                    <button id="alignTopBtn" class="btn-ui btn-secondary btn-align">上</button>
+                </div>
+                <button id="deleteSelectedBtn" class="btn-ui btn-secondary" style="margin-top: 10px;">選択したものを削除</button>
+            </div>
+
+            
+
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <button id="saveFileBtn" class="btn-ui btn-secondary" disabled>💾 文字情報を保存(.json)</button>
+                <label id="loadFileInputLabel" class="btn-ui btn-secondary label-btn-disabled" style="margin:0; text-align:center;">📂 文字情報を読み込み(.json)
+                    <input type="file" id="loadFileInput" accept=".json" style="display: none;" disabled>
+                </label>
+                <button id="downloadBtn" class="btn-ui btn-success" style="padding:8px; font-size:0.9rem;" disabled>🚀 PDF書き出し</button>
+                <div id="limitInfo" style="text-align:center; font-size:0.75rem; color:#64748b;">無料書き出し枠: <span id="remainingCount">3</span>回</div>
+            </div>
+
+            <div id="premiumUpgradeContainer" style="padding: 6px; border: 1px solid var(--border-color); border-radius: 4px; background-color: #f8fafc;">
+                <a href="https://buy.stripe.com/aFafZi2Ab5QR791a8CgYU00" target="_blank" rel="noopener noreferrer" class="btn-ui btn-primary" style="margin-bottom: 4px; font-size: 0.7rem; padding: 4px;">
+                    💳 ライセンスキー購入
+                </a>
+                <input type="text" id="licenseKeyInput" placeholder="キーを入力" style="width: 100%; box-sizing: border-box; margin-bottom: 4px; padding: 4px; font-size: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px;">
+                <button onclick="checkKey()" class="btn-ui btn-secondary" style="font-size: 0.7rem; padding: 4px;">適用する</button>
+            </div>
+
+            <div class="security-info">
+                 🔒PDFファイルはお使いのパソコンのブラウザ内で処理され、サーバーへアップロードされない安全設計です。
+            </div>
+        </div>
+
+        <div class="workspace-wrapper">
+            <div class="workspace">
+                <div class="workspace-inner">
+                    <div class="canvas-container-wrapper">
+                        <canvas id="bgCanvas"></canvas>
+                        <canvas id="fabricCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer-area">
+                <div class="footer-content">
+                    <div class="footer-balloon-container">
+                        <a href="faq.html" target="_blank" rel="noopener noreferrer"><img src="character.png" alt="キャラ" style="width:26px;height:26px;"></a>
+                        <a href="faq.html" target="_blank" rel="noopener noreferrer" class="footer-bubble">よくある質問</a> 
+                         <div class="section-title">   対応環境：パソコン推奨／タブレット対応／スマートフォン非対応</div>
+                    </div>
+                </div>
+                <div>
+                    <a href="terms.html" target="_blank" rel="noopener noreferrer" style="color:#64748b;">利用規約・プライバシーポリシー・特定商取引法に基づく表記</a> | &copy; 2026 PDF文字入れ君 Pro
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <div id="customModalOverlay" class="custom-modal-overlay">
+        <div class="custom-modal">
+            <div id="customModalTitle" class="custom-modal-title">PDF文字入れ君 Pro</div>
+            <div id="customModalMessage" class="custom-modal-message">確認メッセージ</div>
+            <div class="custom-modal-buttons">
+                <button id="customModalCancelBtn" class="custom-modal-btn custom-modal-btn-cancel">キャンセル</button>
+                <button id="customModalOkBtn" class="custom-modal-btn custom-modal-btn-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // PDF.js本体・Worker・CMap・標準フォントは必ず同じバージョンを使う。
+   pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'js/pdf.worker.min.js';
+
+    let fontFileBytes = null; 
+    let customFontName = 'sans-serif';
+    let clipboardObject = null;
+    let fCanvas = null; // ★ 追加：グローバルで保持
+    
+    let currentMode = 'edit';
+    let zoomScale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isTransforming = false;
+    let startTouches = [];
+    let startDist = 0;
+    let startZoom = 1;
+    let startPanX = 0;
+    let startPanY = 0;
+    let isStampMode = false;
+    let activeStampSymbol = '✓';
+    let isWhiteoutMode = false;
+    let whiteoutStart = null;
+    let whiteoutPreview = null;
+
+    const READY_STATUS_TEXT = "文字入れ可能：ダブルクリックでテキスト追加、スタンプ配置、または白で隠す！";
+
+    window.addEventListener('DOMContentLoaded', () => {
+        updateUIByPremiumStatus();
+
+        const fileInput = document.getElementById('fileInput');
+        const pdfUploadBox = document.getElementById('pdfUploadBox');
+        const fontInput = document.getElementById('fontInput');
+        const fontFilePicker = document.getElementById('fontFilePicker');
+        const fontPreviewArea = document.getElementById('fontPreviewArea');
+        const fontChooseBtn = document.getElementById('fontChooseBtn');
+        const localFontSelect = document.getElementById('localFontSelect');
+        const recommendedFonts = {
+            sans: {
+                label: 'Noto Sans JP（ゴシック）',
+                url: 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf'
+            },
+            maru: {
+                label: 'Kosugi Maru（丸ゴシック）',
+                url: 'https://raw.githubusercontent.com/google/fonts/main/apache/kosugimaru/KosugiMaru-Regular.ttf'
+            }
+        };
+        const setFontPreview = (family) => {
+            localFontSelect.style.fontFamily = `"${family}", sans-serif`;
+        };
+        let localFonts = [];
+        let lastSelectedFontValue = 'default';
+        fontChooseBtn.addEventListener('click', async () => {
+            // Must run directly from the user's click for the browser permission prompt.
+            let fontsChecked = false;
+            if (typeof window.queryLocalFonts === 'function') {
+                try {
+                    statusMessage.textContent = 'PCのフォントを確認中...';
+                    localFonts = await window.queryLocalFonts();
+                    fontsChecked = true;
+                } catch (error) {
+                    statusMessage.textContent = error.name === 'NotAllowedError'
+                        ? 'アクセスが許可されませんでした。フォントファイルは読み込めます。'
+                        : 'PCフォントを取得できません。フォントファイルは読み込めます。';
+                }
+            } else {
+                statusMessage.textContent = 'このブラウザではPCフォント一覧を取得できません。';
+            }
+            localFonts.sort((a, b) => a.fullName.localeCompare(b.fullName, 'ja'));
+            localFontSelect.replaceChildren();
+            const placeholderOption = new Option('フォントを選択してください', '');
+            placeholderOption.disabled = true;
+            localFontSelect.add(placeholderOption);
+            const recommendedGroup = document.createElement('optgroup');
+            recommendedGroup.label = 'おすすめフォント';
+            recommendedGroup.append(new Option('Noto Serif JP（明朝）', 'default'));
+            Object.entries(recommendedFonts).forEach(([key, font]) => {
+                recommendedGroup.append(new Option(font.label, `recommended:${key}`));
+            });
+            localFontSelect.append(recommendedGroup);
+            if (localFonts.length) {
+                const pcGroup = document.createElement('optgroup');
+                pcGroup.label = 'PCのフォント';
+                localFonts.forEach((font, index) => pcGroup.append(new Option(font.fullName, String(index))));
+                localFontSelect.append(pcGroup);
+            }
+            localFontSelect.add(new Option('＋ フォントファイルを読み込む (.ttf/.otf)', 'file'));
+            localFontSelect.value = 'default';
+            setFontPreview(customFontName);
+            fontChooseBtn.style.display = 'none';
+            localFontSelect.focus();
+            if (fontsChecked) statusMessage.textContent = 'フォントを選択してください。';
+        });
+        localFontSelect.addEventListener('change', async () => {
+            const choice = localFontSelect.value;
+            if (choice === 'file') {
+                localFontSelect.value = lastSelectedFontValue;
+                fontFilePicker.style.display = 'block';
+                statusMessage.textContent = '下の「フォントファイルを選択」を押してください。';
+                return;
+            }
+            fontFilePicker.style.display = 'none';
+            if (!choice) return;
+            if (choice === 'uploaded') return;
+            if (choice === 'default') {
+                await loadDefaultFont(checkReadyState);
+                fCanvas.getObjects('i-text').forEach(obj => obj.set('fontFamily', customFontName));
+                fCanvas.renderAll();
+                setFontPreview(customFontName);
+                lastSelectedFontValue = choice;
+                return;
+            }
+            const previousBytes = fontFileBytes;
+            const previousName = customFontName;
+            try {
+                statusMessage.textContent = 'フォント設定中...';
+                let bytes;
+                if (choice.startsWith('recommended:')) {
+                    const recommended = recommendedFonts[choice.slice('recommended:'.length)];
+                    if (!recommended) throw new Error('Unknown font');
+                    const response = await fetch(recommended.url);
+                    if (!response.ok) throw new Error('Font download failed');
+                    bytes = await response.arrayBuffer();
+                } else {
+                    const font = localFonts[Number(choice)];
+                    bytes = await (await font.blob()).arrayBuffer();
+                }
+                const uniqueFontName = 'LocalFont_' + Date.now();
+                const face = new FontFace(uniqueFontName, bytes);
+                document.fonts.add(await face.load());
+                fontFileBytes = new Uint8Array(bytes);
+                customFontName = uniqueFontName;
+                setFontPreview(customFontName);
+                fCanvas.getObjects('i-text').forEach(obj => obj.set('fontFamily', customFontName));
+                fCanvas.renderAll();
+                lastSelectedFontValue = choice;
+                checkReadyState();
+            } catch (error) {
+                fontFileBytes = previousBytes;
+                customFontName = previousName;
+                setFontPreview(customFontName);
+                localFontSelect.value = lastSelectedFontValue;
+                statusMessage.textContent = 'このフォントを読み込めません。別のフォントを選んでください。';
+            }
+        });
+        const fontSizeInput = document.getElementById('fontSizeInput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const saveFileBtn = document.getElementById('saveFileBtn');
+        const loadFileInput = document.getElementById('loadFileInput');
+        const loadFileInputLabel = document.getElementById('loadFileInputLabel');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // 各ツール選択などで吹き出しの案内文が変わるたび、
+        // パルスアニメーションを先頭から再スタートする。
+        // 既存の statusMessage.textContent の処理はそのまま利用する。
+        const restartStatusGuidePulse = () => {
+            statusMessage.classList.remove('status-guide-pulse');
+            void statusMessage.offsetWidth; // CSSアニメーションを確実に再スタート
+            statusMessage.classList.add('status-guide-pulse');
+        };
+        const statusGuideObserver = new MutationObserver(() => {
+            restartStatusGuidePulse();
+        });
+        statusGuideObserver.observe(statusMessage, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        const colorBtns = document.querySelectorAll('.color-btn');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const pageInfo = document.getElementById('pageInfo');
+        const insertCheckBtn = document.getElementById('insertCheckBtn');
+        const insertCircleBtn = document.getElementById('insertCircleBtn');
+        const whiteoutBtn = document.getElementById('whiteoutBtn');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+
+        let pdfDocBytes = null; 
+        let historyStack = []; 
+        const maxHistory = 20; 
+        let pdfDocJS = null;       
+        const scale = 1.5;      
+        let currentTextColor = '#000000'; 
+
+        let currentPageNum = 1;
+        let totalPageCount = 0;
+        let pageSavedObjects = {}; 
+
+        // 同じPDFを続けて選び直した場合にも change イベントを発生させる。
+        fileInput.addEventListener('click', () => {
+            fileInput.value = '';
+        });
+
+        // 変更前： const fCanvas = new fabric.Canvas('fabricCanvas', { ... });
+        // 変更後： const を外してグローバル変数に代入する
+        // 入力文字を高密度で描く。画面上の座標とPDF書き出し処理は変更しない。
+        fabric.devicePixelRatio = Math.max(fabric.devicePixelRatio || window.devicePixelRatio || 1, 2);
+        fCanvas = new fabric.Canvas('fabricCanvas', { 
+            freeDrawingBrush: null,
+            allowTouchScrolling: true,
+            enableRetinaScaling: true
+        });
+
+        // 文字は縦横比を保って拡大・縮小する。
+        // 上下・左右中央のハンドルを隠し、横長・縦長への変形を防ぐ。
+        function configureTextControls(obj) {
+            if (!obj || obj.type !== 'i-text') return obj;
+            obj.set({ lockUniScaling: true, uniformScaling: true, objectCaching: false });
+            obj.setControlsVisibility({
+                ml: false,
+                mr: false,
+                mt: false,
+                mb: false
+            });
+            return obj;
+        }
+
+        downloadBtn.addEventListener('click', async () => {
+            if (!pdfDocBytes || !fontFileBytes) return;
+
+            let count = parseInt(localStorage.getItem('downloadCount') || '0');
+            const isPremium = localStorage.getItem('isPremium') === 'true';
+
+            if (!isPremium && count >= 3) {
+                await showCustomConfirm("PDF文字入れ君 Pro", "無料枠の上限（3回）に達しました。ライセンスキーを入力してください。");
+                return;
+            }
+            
+            if (!isPremium) {
+                const userConfirmed = await showCustomConfirm("PDF文字入れ君 Pro", `PDFを書き出しますか？\n（残り無料枠: ${3 - count}回）`);
+                if (!userConfirmed) return;
+            }
+
+            // Chrome / Edge などの対応ブラウザでは、先に保存先を選んでもらう。
+            // showSaveFilePicker はキャンセルを検知できるため、実際に保存された場合だけ
+            // 「PDF書き出し完了！」を表示できる。
+            let saveFileHandle = null;
+            const canConfirmSave = typeof window.showSaveFilePicker === 'function';
+
+            if (canConfirmSave) {
+                try {
+                    saveFileHandle = await window.showSaveFilePicker({
+                        suggestedName: 'edited_document.pdf',
+                        types: [{
+                            description: 'PDFファイル',
+                            accept: { 'application/pdf': ['.pdf'] }
+                        }]
+                    });
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        statusMessage.textContent = "PDF書き出しをキャンセルしました。";
+                        return;
+                    }
+                    console.error(error);
+                    statusMessage.textContent = "保存先を選択できませんでした。";
+                    return;
+                }
+            }
+
+            statusMessage.textContent = "PDFを出力中...";
+            downloadBtn.disabled = true;
+
+            try {
+                pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => obj.toObject());
+
+                const { PDFDocument } = window.PDFLib;
+                const pdfDoc = await PDFDocument.load(pdfDocBytes.slice(0));
+                pdfDoc.registerFontkit(window.fontkit);
+
+                const isCollection = fontFileBytes[0] === 0x74 && fontFileBytes[1] === 0x74 && fontFileBytes[2] === 0x63 && fontFileBytes[3] === 0x66;
+                const jpFont = await pdfDoc.embedFont(fontFileBytes, { index: isCollection ? 0 : undefined });
+
+                const pages = pdfDoc.getPages();
+                for (let p = 1; p <= pages.length; p++) {
+                    const firstPage = pages[p - 1];
+                    const { height } = firstPage.getSize();
+                    const pageObjects = pageSavedObjects[p];
+                    if (pageObjects) {
+                        for (const obj of pageObjects) {
+                            if (obj.type === 'i-text') {
+                                const actualFontSize = (obj.fontSize * (obj.scaleY || 1));
+                                let pdfX, pdfY;
+
+                                if ((obj.text === '✓' || obj.text === '〇') && obj.originX === 'center' && obj.originY === 'center') {
+                                    // PDFLibの描画原点は左下、Fabricのスタンプ座標は中心。
+                                    // 拡大後の実寸から左下座標を求め、
+                                    // 編集画面とPDF出力の中心位置を一致させる。
+                                    // 〇・✓はいずれも1文字のスタンプなので、拡大後の文字サイズを
+                                    // そのまま幅として扱う。フォント寸法APIには依存しない。
+                                    const stampWidth = actualFontSize / scale;
+                                    // ✓はフォント内の字形が左寄りなので、見た目の中心を合わせるため
+                                    // ✓だけ拡大後サイズの26%を右方向へ補正する。〇は補正しない。
+                                    const stampHorizontalOffset = obj.text === '✓' ? stampWidth * 0.26 : 0;
+                                    pdfX = (obj.left / scale) - (stampWidth / 2) + stampHorizontalOffset;
+                                    // PDFLibとFabricでは〇・✓の縦方向の基準位置が異なる。
+                                    // 比較画像から、拡大後サイズの31%を下方向へ補正すると
+                                    // 編集画面の見た目の中心と一致する。
+                                    const stampVerticalOffset = (actualFontSize / scale) * 0.31;
+                                    pdfY = height - (obj.top / scale) - stampVerticalOffset;
+                                } else {
+                                    pdfX = obj.left / scale;
+                                    // Fabric.jsの編集表示とPDF-libでは文字の上端・ベースラインの
+                                    // 基準がわずかに異なるため、通常文字だけ画面上で約2.0px上へ補正する。
+                                    // ✓・〇は上の専用補正を使うので、この値の影響を受けない。
+                                    const normalTextVerticalOffset = 2.0 / scale;
+                                    pdfY = height - (obj.top / scale) - (actualFontSize / scale)
+                                        + normalTextVerticalOffset;
+                                }
+
+                                const rgb = hexToRgb(obj.fill);
+                                firstPage.drawText(obj.text, {
+                                    // Fabric上で拡大・縮小した倍率もPDF出力へ反映する。
+                                    // これがないと、編集画面で大きくした〇・✓・文字が
+                                    // 元のfontSizeのまま小さく書き出されてしまう。
+                                    x: pdfX, y: pdfY, size: actualFontSize / scale, font: jpFont, 
+                                    color: PDFLib.rgb(rgb.r, rgb.g, rgb.b)
+                                });
+                            } else if (obj.type === 'rect' && obj.fill === '#ffffff') {
+                                const rectWidth = (obj.width * (obj.scaleX || 1)) / scale;
+                                const rectHeight = (obj.height * (obj.scaleY || 1)) / scale;
+                                const pdfX = obj.left / scale;
+                                const pdfY = height - (obj.top / scale) - rectHeight;
+                                firstPage.drawRectangle({
+                                    x: pdfX, y: pdfY, width: rectWidth, height: rectHeight,
+                                    color: PDFLib.rgb(1, 1, 1),
+                                    borderWidth: 0
+                                });
+                            }
+                        }
+                    }
+                }
+
+                const modifiedPdfBytes = await pdfDoc.save();
+                const blob = new Blob([modifiedPdfBytes], { type: "application/pdf" });
+
+                if (saveFileHandle) {
+                    // 書き込みとクローズが完了してから保存完了と判定する。
+                    const writable = await saveFileHandle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                } else {
+                    // Safari / Firefox など、保存完了を取得できないブラウザ用。
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = "edited_document.pdf";
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                }
+
+                if (!isPremium) {
+                    count++;
+                    localStorage.setItem('downloadCount', count.toString());
+                    updateUIByPremiumStatus();
+                }
+                statusMessage.textContent = saveFileHandle
+                    ? "PDF書き出し完了！"
+                    : "PDFのダウンロードを開始しました。保存状況をご確認ください。";
+            } catch (error) {
+                console.error(error);
+                statusMessage.textContent = "エラー: " + error.message;
+            } finally {
+                downloadBtn.disabled = false;
+            }
+        });
+
+        function hexToRgb(hex) {
+            hex = hex.replace(/^#/, '');
+            if (hex.length === 3) hex = hex.split('').map(char => char + char).join('');
+            return {
+                r: parseInt(hex.substring(0, 2), 16) / 255,
+                g: parseInt(hex.substring(2, 4), 16) / 255,
+                b: parseInt(hex.substring(4, 6), 16) / 255
+            };
+        }
+
+        fontInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            fontFilePicker.style.display = 'none';
+
+            try {
+                statusMessage.textContent = "フォント設定中...";
+                const arrayBuffer = await file.arrayBuffer();
+                fontFileBytes = new Uint8Array(arrayBuffer);
+
+                const uniqueFontName = 'CustomFont_' + Date.now(); 
+                const fontFace = new FontFace(uniqueFontName, arrayBuffer);
+                const loadedFace = await fontFace.load();
+                document.fonts.add(loadedFace); 
+                customFontName = uniqueFontName; 
+                
+                fontPreviewArea.style.fontFamily = customFontName;
+                fontPreviewArea.textContent = `${file.name.replace(/\.[^/.]+$/, "")} (カスタム)`;
+                localFontSelect.add(new Option(`${file.name}（読み込み済み）`, 'uploaded'));
+                localFontSelect.value = 'uploaded';
+                lastSelectedFontValue = 'uploaded';
+                setFontPreview(customFontName);
+
+                fCanvas.getObjects('i-text').forEach(obj => obj.set('fontFamily', customFontName));
+                fCanvas.renderAll();
+                checkReadyState();
+                fontInput.value = '';
+            } catch (error) {
+                // Keep the previously selected font available on a failed import.
+                statusMessage.textContent = "フォント読込失敗";
+            }
+        });
+
+        function saveHistory() {
+            const json = JSON.stringify(fCanvas.toObject(['selectable', 'evented']));
+            if (historyStack.length > 0 && historyStack[historyStack.length - 1] === json) return;
+            historyStack.push(json);
+            if (historyStack.length > maxHistory) historyStack.shift();
+        }
+
+        saveFileBtn.addEventListener('click', () => {
+            if (!pdfDocJS) return;
+            pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => obj.toObject());
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pageSavedObjects));
+            const anchor = document.createElement('a');
+            anchor.setAttribute("href", dataStr);
+            anchor.setAttribute("download", "pdf_backup.json");
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+        });
+
+        loadFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    pageSavedObjects = JSON.parse(event.target.result);
+                    fCanvas.clear();
+                    if (pageSavedObjects[currentPageNum]) {
+                        fabric.util.enlivenObjects(pageSavedObjects[currentPageNum], (objs) => {
+                            objs.forEach(obj => {
+                                obj.set({ fontFamily: customFontName });
+                                configureTextControls(obj);
+                                fCanvas.add(obj);
+                            });
+                            fCanvas.renderAll();
+                        });
+                    }
+                    statusMessage.textContent = "バックアップを復元しました。";
+                } catch (err) { alert("読込失敗"); }
+            };
+            reader.readAsText(file);
+        });
+
+        fCanvas.on('selection:created', onObjSel);
+        fCanvas.on('selection:updated', onObjSel);
+        function onObjSel(e) {
+            const activeObject = e.selected[0];
+            if (activeObject && activeObject.type === 'i-text') {
+                fontSizeInput.value = Math.round(activeObject.fontSize * activeObject.scaleX);
+                currentTextColor = activeObject.fill;
+                updateColorPaletteUI(currentTextColor);
+            }
+        }
+
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentTextColor = btn.getAttribute('data-color');
+                updateColorPaletteUI(currentTextColor);
+                const active = fCanvas.getActiveObject();
+                if (active && active.type === 'i-text') {
+                    active.set('fill', currentTextColor);
+                    fCanvas.renderAll();
+                }
+            });
+        });
+
+        function updateColorPaletteUI(color) {
+            colorBtns.forEach(b => {
+                if (b.getAttribute('data-color') === color) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+        }
+
+        fontSizeInput.addEventListener('input', () => {
+            const newSize = parseInt(fontSizeInput.value, 10);
+            const active = fCanvas.getActiveObject();
+            if (active && active.type === 'i-text') {
+                active.set({ fontSize: newSize, scaleX: 1, scaleY: 1 });
+                fCanvas.renderAll();
+            }
+        });
+
+        let lastTouchTime = 0;
+        let stampPointerDown = null;
+
+        function getClientPoint(event) {
+            const point = event.changedTouches?.[0] || event.touches?.[0] || event;
+            return { x: point.clientX, y: point.clientY };
+        }
+
+        fCanvas.on('mouse:down', (options) => {
+            stampPointerDown = null;
+
+            if (options.e.button === 2 && (isStampMode || isWhiteoutMode)) {
+                options.e.preventDefault();
+                return;
+            }
+
+            if (isWhiteoutMode && !options.target && pdfDocBytes) {
+                const pointer = fCanvas.getPointer(options.e);
+                whiteoutStart = { x: pointer.x, y: pointer.y };
+                whiteoutPreview = new fabric.Rect({
+                    left: pointer.x, top: pointer.y, width: 1, height: 1,
+                    fill: '#ffffff', stroke: '#2563eb', strokeWidth: 1,
+                    selectable: false, evented: false, objectCaching: false
+                });
+                fCanvas.add(whiteoutPreview);
+                fCanvas.requestRenderAll();
+                return;
+            }
+
+            if (isStampMode && !options.target) {
+                // 押した時点では配置せず、離した時にクリックかドラッグかを判定する。
+                const clientPoint = getClientPoint(options.e);
+                const pointer = fCanvas.getPointer(options.e);
+                stampPointerDown = {
+                    clientX: clientPoint.x,
+                    clientY: clientPoint.y,
+                    canvasX: pointer.x,
+                    canvasY: pointer.y,
+                    symbol: activeStampSymbol
+                };
+                return;
+            }
+
+            if (!isStampMode && !options.target && pdfDocBytes) {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTouchTime;
+                
+                if (tapLength < 300 && tapLength > 0) {
+                    options.e.preventDefault();
+                    const pointer = fCanvas.getPointer(options.e);
+                    createTextAndEdit('', pointer.x, pointer.y);
+                    lastTouchTime = 0;
+                } else {
+                    lastTouchTime = currentTime;
+                }
+            }
+        });
+
+        fCanvas.on('mouse:move', (options) => {
+            if (!isWhiteoutMode || !whiteoutStart || !whiteoutPreview) return;
+            const pointer = fCanvas.getPointer(options.e);
+            const left = Math.min(whiteoutStart.x, pointer.x);
+            const top = Math.min(whiteoutStart.y, pointer.y);
+            const width = Math.abs(pointer.x - whiteoutStart.x);
+            const height = Math.abs(pointer.y - whiteoutStart.y);
+            whiteoutPreview.set({ left, top, width, height });
+            whiteoutPreview.setCoords();
+            fCanvas.requestRenderAll();
+        });
+
+        fCanvas.on('mouse:up', (options) => {
+            if (whiteoutStart && whiteoutPreview) {
+                const rect = whiteoutPreview;
+                whiteoutStart = null;
+                whiteoutPreview = null;
+
+                if (rect.width < 3 || rect.height < 3) {
+                    fCanvas.remove(rect);
+                } else {
+                    rect.set({
+                        stroke: null, strokeWidth: 0,
+                        selectable: true, evented: true,
+                        lockUniScaling: false, uniformScaling: false,
+                        transparentCorners: false, cornerColor: '#2563eb'
+                    });
+                    fCanvas.setActiveObject(rect);
+                    saveHistory();
+                    statusMessage.textContent = '白い範囲を作成しました。移動・サイズ調整できます。';
+                }
+                fCanvas.requestRenderAll();
+                return;
+            }
+
+            if (!stampPointerDown) return;
+
+            const start = stampPointerDown;
+            stampPointerDown = null;
+            const end = getClientPoint(options.e);
+            const moved = Math.hypot(end.x - start.clientX, end.y - start.clientY);
+
+            // マウス・指が10pxを超えて動いた場合は範囲選択のドラッグとみなし、配置しない。
+            if (!isStampMode || moved > 10) return;
+
+            const confirmedText = new fabric.IText(start.symbol, {
+                left: start.canvasX, top: start.canvasY,
+                fontSize: parseInt(fontSizeInput.value, 10),
+                fontFamily: customFontName, fill: currentTextColor,
+                originX: 'center', originY: 'center',
+                lockUniScaling: true, uniformScaling: true
+            });
+            configureTextControls(confirmedText);
+            fCanvas.add(confirmedText);
+            fCanvas.renderAll();
+            saveHistory();
+        });
+
+        fCanvas.on('mouse:dblclick', (options) => {
+            if (!pdfDocBytes) return;
+            if (!isStampMode && !options.target) {
+                const pointer = fCanvas.getPointer(options.e);
+                createTextAndEdit('', pointer.x, pointer.y);
+            }
+        });
+
+        fCanvas.upperCanvasEl.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+
+            // PCの右クリック操作：
+            // 1) レ点・〇・白で隠す中は、その一時ツールを解除する。
+            // 2) それ以外は「文字・スタンプ編集」⇄「移動・ズーム」を切り替える。
+            // オブジェクト削除には使わない。
+            if (isWhiteoutMode) {
+                cancelWhiteoutMode();
+                return;
+            }
+            if (isStampMode) {
+                cancelStampMode();
+                return;
+            }
+            if (!pdfDocBytes) return;
+
+            setAppMode(currentMode === 'zoom' ? 'edit' : 'zoom');
+        });
+
+        function createTextAndEdit(initialText, x, y) {
+            const text = new fabric.IText(initialText, {
+                left: x, top: y,
+                fontSize: parseInt(fontSizeInput.value, 10),
+                fontFamily: customFontName, 
+                fill: currentTextColor,
+                editingBorderColor: '#2563eb',
+                lockUniScaling: true, uniformScaling: true  
+            });
+            configureTextControls(text);
+            text.on('editing:exited', () => {
+                if (!text.text || text.text.trim() === '') {
+                    fCanvas.remove(text);
+                    fCanvas.renderAll();
+                } else {
+                    saveHistory();
+                }
+            });
+            fCanvas.add(text);
+            fCanvas.setActiveObject(text);
+            text.enterEditing();
+            fCanvas.renderAll();
+        }
+
+        insertCheckBtn.addEventListener('click', () => toggleStamp('✓'));
+        insertCircleBtn.addEventListener('click', () => toggleStamp('〇'));
+        whiteoutBtn.addEventListener('click', toggleWhiteoutMode);
+
+        function cancelWhiteoutMode() {
+            isWhiteoutMode = false;
+            whiteoutStart = null;
+            if (whiteoutPreview) {
+                fCanvas.remove(whiteoutPreview);
+                whiteoutPreview = null;
+            }
+            whiteoutBtn.style.backgroundColor = '';
+            fCanvas.defaultCursor = isStampMode ? 'crosshair' : 'default';
+            statusMessage.textContent = READY_STATUS_TEXT;
+            fCanvas.requestRenderAll();
+        }
+
+        // 操作案内は端末に合わせて切り替える。
+        // タッチ操作が主となる端末（タブレット）ではボタン再押下を案内し、
+        // マウス操作が主となるPCでは右クリック解除を案内する。
+        function getToolCancelGuide() {
+            const isTabletLike = navigator.maxTouchPoints > 0 &&
+                window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+            return isTabletLike ? 'もう一度ボタンを押すと解除' : '右クリックで解除';
+        }
+
+        function toggleWhiteoutMode() {
+            if (isWhiteoutMode) {
+                cancelWhiteoutMode();
+                return;
+            }
+            setAppMode('edit', { announce: false });
+            cancelStampMode();
+            isWhiteoutMode = true;
+            whiteoutBtn.style.backgroundColor = '#fde047';
+            fCanvas.defaultCursor = 'crosshair';
+            statusMessage.textContent = `白で隠す：隠したい範囲をドラッグしてください（${getToolCancelGuide()}）`;
+        }
+
+        function cancelStampMode() {
+            isStampMode = false;
+            fCanvas.defaultCursor = 'default';
+            statusMessage.textContent = READY_STATUS_TEXT;
+            insertCheckBtn.style.backgroundColor = '';
+            insertCircleBtn.style.backgroundColor = '';
+        }
+
+        function toggleStamp(symbol) {
+            if (isStampMode && activeStampSymbol === symbol) {
+                cancelStampMode();
+            } else {
+                // スタンプは編集機能なので、必ず編集モードへ統一する。
+                setAppMode('edit', { announce: false });
+                if (isWhiteoutMode) cancelWhiteoutMode();
+                isStampMode = true;
+                activeStampSymbol = symbol;
+                fCanvas.defaultCursor = 'crosshair';
+                statusMessage.textContent = `${symbol} モード：配置したい場所でクリックしてください（${getToolCancelGuide()}）`;
+                
+                if (symbol === '✓') {
+                    insertCheckBtn.style.backgroundColor = '#fde047';
+                    insertCircleBtn.style.backgroundColor = '';
+                } else {
+                    insertCircleBtn.style.backgroundColor = '#fde047';
+                    insertCheckBtn.style.backgroundColor = '';
+                }
+            }
+        }
+
+        document.getElementById('alignLeftBtn').addEventListener('click', () => alignObjects('left'));
+        document.getElementById('alignCenterBtn').addEventListener('click', () => alignObjects('center'));
+        document.getElementById('alignRightBtn').addEventListener('click', () => alignObjects('right'));
+        document.getElementById('alignTopBtn').addEventListener('click', () => alignObjects('top'));
+  
+        function deleteActiveObject() {
+            const activeObjects = fCanvas.getActiveObjects();
+            if (activeObjects.length > 0) {
+                activeObjects.forEach(obj => {
+                    fCanvas.remove(obj);
+                });
+                fCanvas.discardActiveObject();
+                fCanvas.renderAll();
+                saveHistory();
+                statusMessage.textContent = READY_STATUS_TEXT;
+            }
+        }
+
+        deleteSelectedBtn.addEventListener('click', deleteActiveObject);
+
+        window.addEventListener('keydown', (e) => {
+            const activeObject = fCanvas.getActiveObject();
+
+            if (activeObject && activeObject.isEditing) return;
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                if (historyStack.length > 0) {
+                    historyStack.pop(); 
+                    const lastState = historyStack[historyStack.length - 1];
+                    if (lastState) {
+                        fCanvas.loadFromJSON(lastState, () => fCanvas.renderAll());
+                    } else {
+                        fCanvas.clear();
+                    }
+                }
+                return;
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+                if (activeObject) {
+                    e.preventDefault();
+                    activeObject.clone((cloned) => {
+                        clipboardObject = cloned;
+                    });
+                }
+                return;
+            }
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+                if (clipboardObject) {
+                    e.preventDefault();
+                    clipboardObject.clone((clonedObj) => {
+                        fCanvas.discardActiveObject();
+                        
+                        clonedObj.set({
+                            left: clonedObj.left + 15,
+                            top: clonedObj.top + 15,
+                            evented: true,
+                            selectable: true
+                        });
+
+                        if (clonedObj.type === 'activeSelection') {
+                            clonedObj.canvas = fCanvas;
+                            clonedObj.forEachObject((obj) => {
+                                // clone()ではコントロールの表示設定が引き継がれないため、
+                                // 貼り付けた文字にも上下・左右中央ハンドルの非表示を再適用する。
+                                configureTextControls(obj);
+                                fCanvas.add(obj);
+                            });
+                            clonedObj.setCoords();
+                        } else {
+                            configureTextControls(clonedObj);
+                            fCanvas.add(clonedObj);
+                        }
+
+                        clipboardObject.top += 15;
+                        clipboardObject.left += 15;
+
+                        fCanvas.setActiveObject(clonedObj);
+                        fCanvas.requestRenderAll();
+                        saveHistory();
+                    });
+                }
+                return;
+            }
+
+            if (e.key === 'Escape' && (isStampMode || isWhiteoutMode)) {
+                if (isStampMode) cancelStampMode();
+                if (isWhiteoutMode) cancelWhiteoutMode();
+                e.preventDefault(); return;
+            }
+
+            if (e.key === 'Delete' || e.key === 'Backspace') deleteActiveObject();
+        });
+
+        function alignObjects(type) {
+            const activeSelection = fCanvas.getActiveObject();
+            if (!activeSelection || activeSelection.type !== 'activeSelection') return;
+            const objects = activeSelection.getObjects();
+            if (objects.length < 2) return;
+
+            let targetCoord;
+            if (type === 'left') {
+                targetCoord = Math.min(...objects.map(o => o.left));
+                objects.forEach(o => o.set('left', targetCoord));
+            } else if (type === 'right') {
+                targetCoord = Math.max(...objects.map(o => o.left + o.width));
+                objects.forEach(o => o.set('left', targetCoord - o.width));
+            } else if (type === 'center') {
+                const centerX = activeSelection.left + activeSelection.width / 2;
+                objects.forEach(o => o.set('left', centerX - (o.width / 2)));
+            } else if (type === 'top') {
+                targetCoord = Math.min(...objects.map(o => o.top));
+                objects.forEach(o => o.set('top', targetCoord));
+            }
+            fCanvas.renderAll();
+            saveHistory();
+        }
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 新しいPDFを開くたびに、表示倍率と移動位置を初期状態へ戻す。
+            zoomScale = 1;
+            panX = 0;
+            panY = 0;
+            startZoom = 1;
+            startPanX = 0;
+            startPanY = 0;
+            startTouches = [];
+            isTransforming = false;
+            isMouseDragging = false;
+            updateCanvasTransform();
+
+            // 前のPDFのページ別文字・スタンプ情報を新しいPDFへ引き継がない。
+            pageSavedObjects = {};
+
+            statusMessage.textContent = "PDFを読み込み中...";
+            console.info('[PDF] 読み込み開始:', file.name, file.size, 'bytes / PDF.js', pdfjsLib.version);
+            fCanvas.clear();
+            currentPageNum = 1;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                console.info('[PDF] ファイル取得完了');
+                pdfDocBytes = new Uint8Array(arrayBuffer);
+                // 日本語CIDフォントのCMapを読み込み、未埋め込みフォントは
+                // ブラウザのフォント代替機能を使って描画する。
+                const loadingTask = pdfjsLib.getDocument({
+                    data: pdfDocBytes.slice(0),
+                    // Worker内でも同じURLを使えるように絶対URLにする。
+                    cMapUrl: new URL('./cmaps/', document.baseURI).href,
+                    cMapPacked: true,
+                    standardFontDataUrl: new URL('./standard_fonts/', document.baseURI).href,
+                    disableFontFace: false
+                });
+                loadingTask.onProgress = ({ loaded, total }) => {
+                    if (total) statusMessage.textContent = `PDFを解析中... ${Math.round(loaded / total * 100)}%`;
+                };
+                pdfDocJS = await Promise.race([
+                    loadingTask.promise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('PDFの解析が30秒以内に完了しませんでした')), 30000))
+                ]);
+                totalPageCount = pdfDocJS.numPages;
+                console.info('[PDF] 解析完了:', totalPageCount, 'ページ');
+
+                statusMessage.textContent = "1ページ目を描画中...";
+                await renderPage(currentPageNum);
+                console.info('[PDF] 1ページ目の描画完了');
+                checkReadyState();
+            } catch (error) {
+                console.error('PDF読み込みエラー:', error);
+                statusMessage.textContent = "PDFの読み込みに失敗しました：" + (error?.message || String(error));
+                pdfDocBytes = null;
+                pdfDocJS = null;
+                totalPageCount = 0;
+                pageInfo.textContent = "0 / 0 ページ";
+                fileInput.value = '';
+                checkReadyState();
+            }
+        });
+
+        async function renderPage(pageNum) {
+            if (!pdfDocJS) return;
+            pageSavedObjects[currentPageNum] = fCanvas.getObjects().map(obj => obj.toObject());
+            currentPageNum = pageNum;
+            fCanvas.clear(); 
+
+            const pdfPage = await pdfDocJS.getPage(pageNum);
+            console.info('[PDF] ページ取得完了:', pageNum);
+            const viewport = pdfPage.getViewport({ scale: scale });
+            bgCanvas.width = viewport.width;
+            bgCanvas.height = viewport.height;
+            fCanvas.setWidth(viewport.width);
+            fCanvas.setHeight(viewport.height);
+
+            // PDFを描画したCanvasの表示領域を明示する。
+            // Fabric.jsが内部Canvasを作り直しても外枠が0pxにならないようにする。
+            const canvasWrapper = document.querySelector('.canvas-container-wrapper');
+            canvasWrapper.style.width = `${viewport.width}px`;
+            canvasWrapper.style.height = `${viewport.height}px`;
+
+            await pdfPage.render({ canvasContext: bgCtx, viewport: viewport }).promise;
+            console.info('[PDF] Canvas描画完了:', viewport.width, 'x', viewport.height);
+
+            if (pageSavedObjects[pageNum]) {
+                fabric.util.enlivenObjects(pageSavedObjects[pageNum], (objs) => {
+                    objs.forEach(obj => {
+                        obj.set({ fontFamily: customFontName });
+                        configureTextControls(obj);
+                        fCanvas.add(obj);
+                    });
+                    fCanvas.renderAll();
+                });
+            }
+
+            pageInfo.textContent = `${currentPageNum} / ${totalPageCount} ページ`;
+            prevPageBtn.disabled = (currentPageNum === 1);
+            nextPageBtn.disabled = (currentPageNum === totalPageCount);
+            statusMessage.textContent = READY_STATUS_TEXT;
+        }
+
+        prevPageBtn.addEventListener('click', async () => { if (currentPageNum > 1) await renderPage(currentPageNum - 1); });
+        nextPageBtn.addEventListener('click', async () => { if (currentPageNum < totalPageCount) await renderPage(currentPageNum + 1); });
+
+        function checkReadyState() {
+            if (pdfDocBytes) {
+                pdfUploadBox.classList.remove('guide-active');
+                setModeAvailability(true);
+                saveFileBtn.disabled = false;
+                loadFileInput.disabled = false;
+                loadFileInputLabel.classList.remove('label-btn-disabled');
+                insertCheckBtn.disabled = false;
+                insertCircleBtn.removeAttribute('disabled');
+                whiteoutBtn.disabled = false;
+            } else {
+                pdfUploadBox.classList.add('guide-active');
+                setModeAvailability(false);
+                whiteoutBtn.disabled = true;
+            }
+
+            if (pdfDocBytes && fontFileBytes) {
+                statusMessage.textContent = READY_STATUS_TEXT; 
+                downloadBtn.disabled = false;
+            } else {
+                downloadBtn.disabled = true;
+            }
+        }
+
+        loadDefaultFont(checkReadyState);
+    });
+
+    function showCustomConfirm(title, message) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('customModalOverlay');
+            document.getElementById('customModalTitle').textContent = title;
+            document.getElementById('customModalMessage').textContent = message;
+            overlay.classList.add('active');
+
+            const okBtn = document.getElementById('customModalOkBtn');
+            const cancelBtn = document.getElementById('customModalCancelBtn');
+
+            const cleanUp = () => {
+                okBtn.onclick = null;
+                cancelBtn.onclick = null;
+                overlay.classList.remove('active');
+            };
+
+            okBtn.onclick = () => { cleanUp(); resolve(true); };
+            cancelBtn.onclick = () => { cleanUp(); resolve(false); };
+        });
+    }
+
+    async function loadDefaultFont(onComplete) {
+        const fontPreviewArea = document.getElementById('fontPreviewArea');
+        const statusMessage = document.getElementById('statusMessage');
+        try {
+            statusMessage.textContent = "初期フォントを読み込み中...";
+            const res = await fetch('サンプルフォント/NotoSerifJP-VariableFont_wght.ttf');
+            if (!res.ok) throw new Error();
+            const buf = await res.arrayBuffer();
+            fontFileBytes = new Uint8Array(buf);
+            const face = new FontFace('DefaultFont', buf);
+            document.fonts.add(await face.load());
+            customFontName = 'DefaultFont';
+            const selectedFont = document.getElementById('localFontSelect');
+            if (selectedFont) selectedFont.style.fontFamily = '"DefaultFont", sans-serif';
+            const fontButton = document.getElementById('fontChooseBtn');
+            if (fontButton) fontButton.style.fontFamily = '"DefaultFont", sans-serif';
+            
+            fontPreviewArea.style.fontFamily = customFontName;
+            fontPreviewArea.textContent = 'Noto Serif JP (初期フォント)';
+            
+            statusMessage.textContent = "PDFファイルを選択してください。";
+            if (onComplete) onComplete();
+        } catch (e) {
+            fontPreviewArea.textContent = 'フォントを選択してください';
+            statusMessage.textContent = "PDFファイルを選択してください。";
+        }
+    }
+
+    function updateUIByPremiumStatus() {
+        const isPremium = localStorage.getItem('isPremium') === 'true';
+        if (isPremium) {
+            document.getElementById('limitInfo').style.display = 'none';
+            document.getElementById('premiumUpgradeContainer').style.display = 'none';
+        } else {
+            const count = parseInt(localStorage.getItem('downloadCount') || '0');
+            document.getElementById('remainingCount').textContent = Math.max(0, 3 - count);
+        }
+    }
+
+    function verifyLicenseKey(inputKey) {
+        const validKeys = [
+        "PRO-A1B2-C3D4",
+        "PRO-E5F6-G7H8",
+        "PRO-J9K0-L1M2",
+        "PRO-N3P4-Q5R6",
+        "PRO-S7T8-U9V0",
+        "PRO-W1X2-Y3Z4",
+        "PRO-B5C6-D7E8",
+        "PRO-F9G0-H1J2",
+        "PRO-K3L4-M5N6",
+        "PRO-P7Q8-R9S0",
+        "PRO-T1U2-V3W4",
+        "PRO-X5Y6-Z7A8",
+        "PRO-C9D0-E1F2",
+        "PRO-G3H4-J5K6",
+        "PRO-L7M8-N9P0",
+        "PRO-Q1R2-S3T4",
+        "PRO-U5V6-W7X8",
+        "PRO-Y9Z0-B1C2",
+        "PRO-D3E4-F5G6",
+        "PRO-H7J8-K9L0",
+        "PRO-M1N2-P3Q4",
+        "PRO-R5S6-T7U8",
+        "PRO-V9W0-X1Y2",
+        "PRO-Z3A4-C5D6",
+        "PRO-E7F8-G9H0",
+        "PRO-J1K2-L3M4",
+        "PRO-N5P6-Q7R8",
+        "PRO-S9T0-U1V2",
+        "PRO-W3X4-Y5Z6",
+        "PRO-B7C8-D9E0",
+        "PRO-F1G2-H3J4",
+        "PRO-K5L6-M7N8",
+        "PRO-P9Q0-R1S2",
+        "PRO-T3U4-V5W6",
+        "PRO-X7Y8-Z9A0",
+        "PRO-C1D2-E3F4",
+        "PRO-G5H6-J7K8",
+        "PRO-L9M0-N1P2",
+        "PRO-Q3R4-S5T6",
+        "PRO-U7V8-W9X0",
+        "PRO-Y1Z2-B3C4",
+        "PRO-D5E6-F7G8",
+        "PRO-H9J0-K1L2",
+        "PRO-M3N4-P5Q6",
+        "PRO-R7S8-T9U0",
+        "PRO-V1W2-X3Y4",
+        "PRO-Z5A6-C7D8",
+        "PRO-E9F0-G1H2",
+        "PRO-J3K4-L5M6",
+        "PRO-N7P8-Q9R0",
+        "PRO-S1T2-U3V4",
+        "PRO-W5X6-Y7Z8",
+        "PRO-B9C0-D1E2",
+        "PRO-F3G4-H5J6",
+        "PRO-K7L8-M9N0",
+        "PRO-P1Q2-R3S4",
+        "PRO-T5U6-V7W8",
+        "PRO-X9Y0-Z1A2",
+        "PRO-C3D4-E5F6",
+        "PRO-G7H8-J9K0",
+        "PRO-L1M2-N3P4",
+        "PRO-Q5R6-S7T8",
+        "PRO-U9V0-W1X2",
+        "PRO-Y3Z4-B5C6",
+        "PRO-D7E8-F9G0",
+        "PRO-H1J2-K3L4",
+        "PRO-M5N6-P7Q8",
+        "PRO-R9S0-T1U2",
+        "PRO-V3W4-X5Y6",
+        "PRO-Z7A8-C9D0",
+        "PRO-E1F2-G3H4",
+        "PRO-J5K6-L7M8",
+        "PRO-N9P0-Q1R2",
+        "PRO-S3T4-U5V6",
+        "PRO-W7X8-Y9Z0",
+        "PRO-B1C2-D3E4",
+        "PRO-F5G6-H7J8",
+        "PRO-K9L0-M1N2",
+        "PRO-P3Q4-R5S6",
+        "PRO-T7U8-V9W0",
+        "PRO-X1Y2-Z3A4",
+        "PRO-C5D6-E7F8",
+        "PRO-G9H0-J1K2",
+        "PRO-L3M4-N5P6",
+        "PRO-Q7R8-S9T0",
+        "PRO-U1V2-W3X4",
+        "PRO-Y5Z6-B7C8",
+        "PRO-D9E0-F1G2",
+        "PRO-H3J4-K5L6",
+        "PRO-M7N8-P9Q0",
+        "PRO-R1S2-T3U4",
+        "PRO-V5W6-X7Y8",
+        "PRO-Z9A0-C1D2",
+        "PRO-E3F4-G5H6",
+        "PRO-J7K8-L9M0",
+        "PRO-N1P2-Q3R4",
+        "PRO-S5T6-U7V8",
+        "PRO-W9X0-Y1Z2",
+        "PRO-B3C4-D5E6",
+        "PRO-F7G8-H9J0",
+        "PRO-K1L2-M3N4",
+        "PRO-P5Q6-R7S8",
+        "PRO-T9U0-V1W2",
+        "PRO-X3Y4-Z5A6",
+        "PRO-C7D8-E9F0",
+        "PRO-G1H2-J3K4",
+        "PRO-L5M6-N7P8",
+        "PRO-Q9R0-S1T2",
+        "PRO-U3V4-W5X6",
+        "PRO-Y7Z8-B9C0",
+        "PRO-D1E2-F3G4",
+        "PRO-H5J6-K7L8",
+        "PRO-M9N0-P1Q2",
+        "PRO-R3S4-T5U6",
+        "PRO-V7W8-X9Y0",
+        "PRO-Z1A2-C3D4",
+        "PRO-E5F6-G7H8",
+        "PRO-J9K0-L1M2",
+        "PRO-N3P4-Q5R6",
+        "PRO-S7T8-U9V0",
+        "PRO-W1X2-Y3Z4",
+        "PRO-B5C6-D7E8",
+        "PRO-F9G0-H1J2",
+        "PRO-K3L4-M5N6",
+        "PRO-P7Q8-R9S0",
+        "PRO-T1U2-V3W4",
+        "PRO-X5Y6-Z7A8",
+        "PRO-C9D0-E1F2",
+        "PRO-G3H4-J5K6",
+        "PRO-L7M8-N9P0",
+        "PRO-Q1R2-S3T4",
+        "PRO-U5V6-W7X8",
+        "PRO-Y9Z0-B1C2",
+        "PRO-D3E4-F5G6",
+        "PRO-H7J8-K9L0",
+        "PRO-M1N2-P3Q4",
+        "PRO-R5S6-T7U8",
+        "PRO-V9W0-X1Y2",
+        "PRO-Z3A4-C5D6",
+        "PRO-E7F8-G9H0",
+        "PRO-J1K2-L3M4",
+        "PRO-N5P6-Q7R8",
+        "PRO-S9T0-U1V2",
+        "PRO-W3X4-Y5Z6",
+        "PRO-B7C8-D9E0",
+        "PRO-F1G2-H3J4",
+        "PRO-K5L6-M7N8",
+        "PRO-P9Q0-R1S2",
+        "PRO-T3U4-V5W6",
+        "PRO-X7Y8-Z9A0",
+        "PRO-C1D2-E3F4",
+        "PRO-G5H6-J7K8",
+        "PRO-L9M0-N1P2",
+        "PRO-Q3R4-S5T6",
+        "PRO-U7V8-W9X0",
+        "PRO-Y1Z2-B3C4",
+        "PRO-D5E6-F7G8",
+        "PRO-H9J0-K1L2",
+        "PRO-M3N4-P5Q6",
+        "PRO-R7S8-T9U0",
+        "PRO-V1W2-X3Y4",
+        "PRO-Z5A6-C7D8",
+        "PRO-E9F0-G1H2",
+        "PRO-J3K4-L5M6",
+        "PRO-N7P8-Q9R0",
+        "PRO-S1T2-U3V4",
+        "PRO-W5X6-Y7Z8",
+        "PRO-B9C0-D1E2",
+        "PRO-F3G4-H5J6",
+        "PRO-K7L8-M9N0",
+        "PRO-P1Q2-R3S4",
+        "PRO-T5U6-V7W8",
+        "PRO-X9Y0-Z1A2",
+        "PRO-C3D4-E5F6",
+        "PRO-G7H8-J9K0",
+        "PRO-L1M2-N3P4",
+        "PRO-Q5R6-S7T8",
+        "PRO-U9V0-W1X2",
+        "PRO-Y3Z4-B5C6",
+        "PRO-D7E8-F9G0",
+        "PRO-H1J2-K3L4",
+        "PRO-M5N6-P7Q8",
+        "PRO-R9S0-T1U2",
+        "PRO-V3W4-X5Y6",
+        "PRO-Z7A8-C9D0",
+        "PRO-E1F2-G3H4",
+        "PRO-J5K6-L7M8",
+        "PRO-N9P0-Q1R2",
+        "PRO-S3T4-U5V6",
+        "PRO-W7X8-Y9Z0",
+        "PRO-B1C2-D3E4",
+        "PRO-F5G6-H7J8",
+        "PRO-K9L0-M1N2",
+        "PRO-P3Q4-R5S6",
+        "PRO-T7U8-V9W0",
+        "PRO-X1Y2-Z3A4",
+        "PRO-C5D6-E7F8",
+        "PRO-G9H0-J1K2",
+        "PRO-L3M4-N5P6",
+        "PRO-Q7R8-S9T0",
+        "PRO-U1V2-W3X4",
+        "PRO-Y5Z6-B7C8",
+        "PRO-D9E0-F1G2",
+        "PRO-H3J4-K5L6",
+        "PRO-M7N8-P9Q0",
+        "PRO-R1S2-T3U4",
+        "PRO-V5W6-X7Y8",
+        "PRO-Z9A0-C1D2",
+        "PRO-E3F4-G5H6",
+        "PRO-J7K8-L9M0",
+        "PRO-N1P2-Q3R4",
+        "PRO-S5T6-U7V8",
+        "PRO-W9X0-Y1Z2",
+        "PRO-B3C4-D5E6",
+        "PRO-F7G8-H9J0",
+        "PRO-K1L2-M3N4",
+        "PRO-P5Q6-R7S8",
+        "PRO-T9U0-V1W2",
+        "PRO-X3Y4-Z5A6",
+        "PRO-C7D8-E9F0",
+        "PRO-G1H2-J3K4",
+        "PRO-L5M6-N7P8",
+        "PRO-Q9R0-S1T2",
+        "PRO-U3V4-W5X6",
+        "PRO-Y7Z8-B9C0",
+        "PRO-D1E2-F3G4",
+        "PRO-H5J6-K7L8",
+        "PRO-M9N0-P1Q2",
+        "PRO-R3S4-T5U6",
+        "PRO-V7W8-X9Y0",
+        "PRO-Z1A2-C3D4",
+        "PRO-E5F6-G7H8",
+        "PRO-J9K0-L1M2",
+        "PRO-N3P4-Q5R6",
+        "PRO-S7T8-U9V0",
+        "PRO-W1X2-Y3Z4",
+        "PRO-B5C6-D7E8",
+        "PRO-F9G0-H1J2",
+        "PRO-K3L4-M5N6",
+        "PRO-P7Q8-R9S0",
+        "PRO-T1U2-V3W4",
+        "PRO-X5Y6-Z7A8",
+        "PRO-C9D0-E1F2",
+        "PRO-G3H4-J5K6",
+        "PRO-L7M8-N9P0",
+        "PRO-Q1R2-S3T4",
+        "PRO-U5V6-W7X8",
+        "PRO-Y9Z0-B1C2",
+        "PRO-D3E4-F5G6",
+        "PRO-H7J8-K9L0",
+        "PRO-M1N2-P3Q4",
+        "PRO-R5S6-T7U8",
+        "PRO-V9W0-X1Y2",
+        "PRO-Z3A4-C5D6",
+        "PRO-E7F8-G9H0",
+        "PRO-J1K2-L3M4",
+        "PRO-N5P6-Q7R8",
+        "PRO-S9T0-U1V2",
+        "PRO-W3X4-Y5Z6",
+        "PRO-B7C8-D9E0",
+        "PRO-F1G2-H3J4",
+        "PRO-K5L6-M7N8",
+        "PRO-P9Q0-R1S2",
+        "PRO-T3U4-V5W6",
+        "PRO-X7Y8-Z9A0",
+        "PRO-C1D2-E3F4",
+        "PRO-G5H6-J7K8",
+        "PRO-L9M0-N1P2",
+        "PRO-Q3R4-S5T6",
+        "PRO-U7V8-W9X0",
+        "PRO-Y1Z2-B3C4",
+        "PRO-D5E6-F7G8",
+        "PRO-H9J0-K1L2",
+        "PRO-M3N4-P5Q6",
+        "PRO-R7S8-T9U0",
+        "PRO-V1W2-X3Y4",
+        "PRO-Z5A6-C7D8",
+        "PRO-E9F0-G1H2",
+        "PRO-J3K4-L5M6",
+        "PRO-N7P8-Q9R0",
+        "PRO-S1T2-U3V4",
+        "PRO-W5X6-Y7Z8",
+        "PRO-B9C0-D1E2",
+        "PRO-F3G4-H5J6",
+        "PRO-K7L8-M9N0",
+        "PRO-P1Q2-R3S4",
+        "PRO-T5U6-V7W8",
+        "PRO-X9Y0-Z1A2",
+        "PRO-C3D4-E5F6",
+        "PRO-G7H8-J9K0",
+        "PRO-L1M2-N3P4",
+        "PRO-Q5R6-S7T8",
+        "PRO-U9V0-W1X2",
+        "PRO-Y3Z4-B5C6",
+        "PRO-D7E8-F9G0",
+        "PRO-H1J2-K3L4",
+        "PRO-M5N6-P7Q8",
+        "PRO-R9S0-T1U2",
+        "PRO-V3W4-X5Y6",
+        "PRO-Z7A8-C9D0",
+        "PRO-E1F2-G3H4",
+        "PRO-J5K6-L7M8",
+        "PRO-N9P0-Q1R2",
+        "PRO-S3T4-U5V6",
+        "PRO-W7X8-Y9Z0",
+        "PRO-B1C2-D3E4",
+        "PRO-F5G6-H7J8",
+        "PRO-K9L0-M1N2",
+        "PRO-P3Q4-R5S6",
+        "PRO-T7U8-V9W0",
+        "PRO-X1Y2-Z3A4",
+        "PRO-C5D6-E7F8",
+        "PRO-G9H0-J1K2",
+        "PRO-L3M4-N5P6",
+        "PRO-Q7R8-S9T0",
+        "PRO-U1V2-W3X4",
+        "PRO-Y5Z6-B7C8",
+        "PRO-D9E0-F1G2",
+        "PRO-H3J4-K5L6",
+        "PRO-M7N8-P9Q0",
+        "PRO-R1S2-T3U4",
+        "PRO-V5W6-X7Y8",
+        "PRO-Z9A0-C1D2",
+        "PRO-E3F4-G5H6",
+        "PRO-J7K8-L9M0",
+        "PRO-N1P2-Q3R4",
+        "PRO-S5T6-U7V8",
+        "PRO-W9X0-Y1Z2",
+        "PRO-B3C4-D5E6",
+        "PRO-F7G8-H9J0",
+        "PRO-K1L2-M3N4",
+        "PRO-P5Q6-R7S8",
+        "PRO-T9U0-V1W2",
+        "PRO-X3Y4-Z5A6",
+        "PRO-C7D8-E9F0",
+        "PRO-G1H2-J3K4",
+        "PRO-L5M6-N7P8",
+        "PRO-Q9R0-S1T2",
+        "PRO-U3V4-W5X6",
+        "PRO-Y7Z8-B9C0",
+        "PRO-D1E2-F3G4",
+        "PRO-H5J6-K7L8",
+        "PRO-M9N0-P1Q2",
+        "PRO-R3S4-T5U6",
+        "PRO-V7W8-X9Y0"
+        ]; 
+        return validKeys.includes(inputKey.trim());
+    }
+
+    async function checkKey() {
+        const key = document.getElementById('licenseKeyInput').value.trim();
+        if (verifyLicenseKey(key)) {
+            localStorage.setItem('isPremium', 'true');
+            await showCustomConfirm("PDF文字入れ君 Pro", "認証成功！制限が解除されました。");
+            updateUIByPremiumStatus();
+        } else {
+            await showCustomConfirm("PDF文字入れ君 Pro", "無効なキーです。");
+        }
+    }
+
+    function openHowTo(videoSource, videoTitle) {
+        const modal = document.getElementById('howtoModal');
+        const video = document.getElementById('howtoVideo');
+        const source = video ? video.querySelector('source') : null;
+        const title = document.getElementById('howtoTitle');
+        if (!modal || !video) return;
+        if (source && source.getAttribute('src') !== videoSource) {
+            source.setAttribute('src', videoSource);
+            video.load();
+        }
+        if (title) title.textContent = videoTitle;
+        modal.style.display = 'flex';
+        video.currentTime = 0;
+        video.play().catch(function() {});
+    }
+
+    function closeHowTo(event) {
+        const modal = document.getElementById('howtoModal');
+        const video = document.getElementById('howtoVideo');
+        if (!modal || !video) return;
+        modal.style.display = 'none';
+        video.pause();
+        video.currentTime = 0;
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modal = document.getElementById('howtoModal');
+            if (modal && modal.style.display === 'flex') {
+                closeHowTo();
+            }
+        }
+    });
+
+    const workspace = document.querySelector('.workspace');
+    const canvasWrapper = document.querySelector('.canvas-container-wrapper');
+    const modeZoomBtn = document.getElementById('modeZoomBtn');
+    const modeEditBtn = document.getElementById('modeEditBtn');
+    const whiteoutModeBtn = document.getElementById('whiteoutBtn');
+
+    function setModeAvailability(enabled) {
+        modeZoomBtn.disabled = !enabled;
+        modeEditBtn.disabled = !enabled;
+        if (whiteoutModeBtn) whiteoutModeBtn.disabled = !enabled;
+
+        if (enabled) {
+            setAppMode('edit', { announce: false });
+        } else {
+            currentMode = 'edit';
+            modeZoomBtn.style.backgroundColor = '#f1f5f9';
+            modeEditBtn.style.backgroundColor = '#f1f5f9';
+        }
+    }
+
+    function setAppMode(mode, { announce = true } = {}) {
+        currentMode = mode;
+        const statusMessage = document.getElementById('statusMessage');
+        const insertCheckBtn = document.getElementById('insertCheckBtn');
+        const insertCircleBtn = document.getElementById('insertCircleBtn');
+        
+        if (mode === 'zoom') {
+            // ズームへ切り替えた時は、編集中のスタンプモードを確実に解除する。
+            isStampMode = false;
+            isWhiteoutMode = false;
+            whiteoutStart = null;
+            if (whiteoutPreview && fCanvas) { fCanvas.remove(whiteoutPreview); whiteoutPreview = null; }
+            if (whiteoutModeBtn) whiteoutModeBtn.style.backgroundColor = '';
+            insertCheckBtn.style.backgroundColor = '';
+            insertCircleBtn.style.backgroundColor = '';
+            modeZoomBtn.style.backgroundColor = '#fde047';
+            modeEditBtn.style.backgroundColor = '#f1f5f9';
+            if (announce) {
+                const isTabletLike = navigator.maxTouchPoints > 0 &&
+                    window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+                statusMessage.textContent = isTabletLike
+                    ? "「移動・ズーム」モード：2本指で拡大縮小・ドラッグで移動"
+                    : "「移動・ズーム」モード：ドラッグで移動・ホイールで拡大縮小（右クリックで編集へ）";
+            }
+            if (fCanvas) {
+                fCanvas.selection = false;
+                fCanvas.defaultCursor = 'grab';
+                fCanvas.discardActiveObject();
+                fCanvas.requestRenderAll();
+            }
+        } else {
+            modeZoomBtn.style.backgroundColor = '#f1f5f9';
+            modeEditBtn.style.backgroundColor = '#fde047';
+            if (announce) {
+                const isTabletLike = navigator.maxTouchPoints > 0 &&
+                    window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+                statusMessage.textContent = isTabletLike
+                    ? READY_STATUS_TEXT
+                    : "文字・スタンプ編集：ダブルクリックで文字追加（右クリックで移動・ズームへ）";
+            }
+            if (fCanvas) {
+                fCanvas.selection = true;
+                fCanvas.defaultCursor = (isStampMode || isWhiteoutMode) ? 'crosshair' : 'default';
+            }
+        }
+    }
+
+    if (modeZoomBtn && modeEditBtn) {
+        modeZoomBtn.addEventListener('click', () => setAppMode('zoom'));
+        modeEditBtn.addEventListener('click', () => setAppMode('edit'));
+    }
+
+    function updateCanvasTransform() {
+        if (canvasWrapper) {
+            canvasWrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+        }
+    }
+
+    if (workspace) {
+        // PC：移動・ズームモード中は、マウスホイールでカーソル位置を中心に拡大縮小。
+        workspace.addEventListener('wheel', (e) => {
+            if (currentMode !== 'zoom' || !canvasWrapper) return;
+            e.preventDefault();
+
+            const oldZoom = zoomScale;
+            const zoomFactor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+            const newZoom = Math.min(5, Math.max(0.5, oldZoom * zoomFactor));
+            if (newZoom === oldZoom) return;
+
+            // 拡大・縮小しても、マウスカーソル下のPDF位置が動かないよう補正する。
+            const rect = canvasWrapper.getBoundingClientRect();
+            const cursorX = e.clientX - rect.left;
+            const cursorY = e.clientY - rect.top;
+            const ratio = newZoom / oldZoom;
+            panX += cursorX * (1 - ratio);
+            panY += cursorY * (1 - ratio);
+            zoomScale = newZoom;
+            updateCanvasTransform();
+
+            document.getElementById('statusMessage').textContent =
+                `「移動・ズーム(スクロール)」モード：表示倍率 ${Math.round(zoomScale * 100)}%`;
+        }, { passive: false });
+
+        workspace.addEventListener('touchstart', (e) => {
+            if (currentMode !== 'zoom') return;
+            startTouches = Array.from(e.touches);
+            if (startTouches.length === 2) {
+                startDist = getTouchDistance(startTouches[0], startTouches[1]);
+                startZoom = zoomScale;
+            } else if (startTouches.length === 1) {
+                startPanX = panX;
+                startPanY = panY;
+            }
+            isTransforming = true;
+        }, { passive: false });
+
+        workspace.addEventListener('touchmove', (e) => {
+            if (currentMode !== 'zoom' || !isTransforming) return;
+            e.preventDefault();
+
+            const currentTouches = Array.from(e.touches);
+            if (currentTouches.length === 2 && startTouches.length === 2) {
+                const currentDist = getTouchDistance(currentTouches[0], currentTouches[1]);
+                const scaleFactor = currentDist / startDist;
+                let newZoom = startZoom * scaleFactor;
+                if (newZoom < 0.5) newZoom = 0.5;
+                if (newZoom > 5.0) newZoom = 5.0;
+                zoomScale = newZoom;
+                updateCanvasTransform();
+            } else if (currentTouches.length === 1 && startTouches.length === 1) {
+                const dx = currentTouches[0].clientX - startTouches[0].clientX;
+                const dy = currentTouches[0].clientY - startTouches[0].clientY;
+                panX = startPanX + dx;
+                panY = startPanY + dy;
+                updateCanvasTransform();
+            }
+        }, { passive: false });
+
+        workspace.addEventListener('touchend', (e) => {
+            if (currentMode !== 'zoom') return;
+            startTouches = Array.from(e.touches);
+            if (startTouches.length === 0) isTransforming = false;
+        });
+    }
+
+    function getTouchDistance(t1, t2) {
+        const dx = t1.clientX - t2.clientX;
+        const dy = t1.clientY - t2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    let isMouseDragging = false;
+    let mouseStartX = 0, mouseStartY = 0;
+
+    if (workspace) {
+        workspace.addEventListener('mousedown', (e) => {
+            if (currentMode !== 'zoom') return;
+            isMouseDragging = true;
+            mouseStartX = e.clientX - panX;
+            mouseStartY = e.clientY - panY;
+        });
+
+        workspace.addEventListener('mousemove', (e) => {
+            if (!isMouseDragging || currentMode !== 'zoom') return;
+            panX = e.clientX - mouseStartX;
+            panY = e.clientY - mouseStartY;
+            updateCanvasTransform();
+        });
+    }
+
+    window.addEventListener('mouseup', () => {
+        isMouseDragging = false;
+    });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const infoBtn = document.getElementById('whiteoutInfoBtn');
+    const popup = document.getElementById('whiteoutInfoPopup');
+    if (!infoBtn || !popup) return;
+
+    infoBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+    });
+
+    popup.addEventListener('click', function (event) {
+        event.stopPropagation();
+    });
+
+    document.addEventListener('click', function () {
+        popup.style.display = 'none';
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const pcUrl = 'https://kamogen1919-rgb.github.io/pdf-editor-pro/app.html';
+    const smartphoneMedia = window.matchMedia('(max-width: 767px)');
+    const shareButton = document.getElementById('sharePcUrl');
+    const copyButton = document.getElementById('copyPcUrl');
+    const copyMessage = document.getElementById('copyMessage');
+    const mailLink = document.getElementById('mailPcUrl');
+    let copyMessageTimer = null;
+
+    function updateSmartphoneGuideState() {
+        document.body.classList.toggle('smartphone-guide-open', smartphoneMedia.matches);
+    }
+
+    updateSmartphoneGuideState();
+    if (typeof smartphoneMedia.addEventListener === 'function') {
+        smartphoneMedia.addEventListener('change', updateSmartphoneGuideState);
+    } else {
+        smartphoneMedia.addListener(updateSmartphoneGuideState);
+    }
+
+    mailLink.href = 'mailto:?subject=' + encodeURIComponent('PDF文字入れ君 Pro')
+        + '&body=' + encodeURIComponent('パソコンからこちらを開いてください。\n' + pcUrl);
+
+    // スマホ標準の共有画面を開く（LINE・メール・メッセージ等）
+    if (shareButton) {
+        if (navigator.share) {
+            shareButton.addEventListener('click', async function () {
+                try {
+                    await navigator.share({
+                        title: 'PDF文字入れ君 Pro',
+                        text: 'パソコンからこちらを開いてください。',
+                        url: pcUrl
+                    });
+                } catch (error) {
+                    // ユーザーが共有画面を閉じた場合は何もしない
+                    if (error.name !== 'AbortError') {
+                        copyMessage.textContent = '共有できませんでした。URLコピーをご利用ください';
+                        copyMessage.classList.add('is-visible');
+                    }
+                }
+            });
+        } else {
+            // Web Share API非対応ブラウザでは共有ボタンを隠す
+            shareButton.style.display = 'none';
+        }
+    }
+
+    copyButton.addEventListener('click', async function () {
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(pcUrl);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = pcUrl;
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                textarea.remove();
+            }
+
+            copyMessage.textContent = 'URLをコピーしました';
+            copyMessage.classList.add('is-visible');
+            clearTimeout(copyMessageTimer);
+            copyMessageTimer = setTimeout(function () {
+                copyMessage.classList.remove('is-visible');
+            }, 2500);
+        } catch (error) {
+            copyMessage.textContent = 'コピーできませんでした。URLを長押ししてコピーしてください';
+            copyMessage.classList.add('is-visible');
+        }
+    });
+});
+</script>
+
+<div id="howtoModal" class="howto-modal" onclick="closeHowTo(event)">
+    <div class="howto-modal-content" onclick="event.stopPropagation()">
+        <button class="howto-close" type="button" onclick="closeHowTo()" aria-label="閉じる">×</button>
+        <h2 id="howtoTitle">基本的な使い方</h2>
+        <video id="howtoVideo" controls playsinline>
+            <source src="demo.mp4" type="video/mp4">
+            お使いのブラウザでは動画を再生できません。
+        </video>
+    </div>
+</div>
+
+</body>
+</html>
