@@ -1011,6 +1011,19 @@
         const fontPreviewArea = document.getElementById('fontPreviewArea');
         const fontChooseBtn = document.getElementById('fontChooseBtn');
         const localFontSelect = document.getElementById('localFontSelect');
+        // Browsers without Local Font Access can open the native list on the first click.
+        if (typeof window.queryLocalFonts !== 'function') {
+            fontChooseBtn.style.display = 'none';
+            const unsupportedMessage = 'このブラウザではPCフォント一覧を取得できません。おすすめフォントかファイルを選択してください。';
+            localFontSelect.addEventListener('pointerdown', () => {
+                statusMessage.textContent = unsupportedMessage;
+            });
+            localFontSelect.addEventListener('keydown', (event) => {
+                if (['Enter', ' ', 'ArrowDown'].includes(event.key)) {
+                    statusMessage.textContent = unsupportedMessage;
+                }
+            });
+        }
         const recommendedFonts = {
             sans: {
                 label: 'Noto Sans JP（ゴシック）',
